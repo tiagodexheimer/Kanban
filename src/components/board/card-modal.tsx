@@ -113,14 +113,22 @@ export function CardModal({ isOpen, onClose, columnId, cardId }: CardModalProps)
             </div>
             <div>
               <label className="block text-xs font-bold text-muted-foreground uppercase mb-1.5 ml-1">Prazo</label>
-              <div className="relative">
+              <div 
+                className="relative cursor-pointer group"
+                onClick={(e) => {
+                  const input = e.currentTarget.querySelector('input');
+                  if (input && 'showPicker' in input) {
+                    try { (input as any).showPicker(); } catch (e) {}
+                  }
+                }}
+              >
                 <input
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
-                  className="w-full bg-accent/30 border border-border/50 rounded-xl p-2.5 pl-9 text-sm outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full bg-accent/30 border border-border/50 rounded-xl p-2.5 pl-9 text-sm outline-none focus:ring-2 focus:ring-primary cursor-pointer hover:bg-accent/50 transition-colors"
                 />
-                <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-hover:text-primary transition-colors" />
               </div>
             </div>
           </div>
