@@ -14,6 +14,7 @@ model Board {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   columns     Column[]
+  tags        Tag[]
 }
 
 model Column {
@@ -35,12 +36,39 @@ model Card {
   description String?
   position    Int
   priority    String   @default("Medium")
-  tags        String[] @default([])
   dueDate     DateTime?
   columnId    String
   column      Column   @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  tags        Tag[]    @relation("CardTags")
+  checklists  ChecklistItem[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([columnId])
+}
+
+model Tag {
+  id        String   @id @default(uuid())
+  name      String
+  color     String   @default("#7c3aed")
+  boardId   String
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cards     Card[]   @relation("CardTags")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([boardId])
+}
+
+model ChecklistItem {
+  id        String   @id @default(uuid())
+  text      String
+  completed Boolean  @default(false)
+  position  Int
+  cardId    String
+  card      Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([cardId])
 }

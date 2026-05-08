@@ -8,6 +8,13 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
+  // Limpa o banco para evitar duplicatas se rodar de novo
+  await prisma.checklistItem.deleteMany();
+  await prisma.tag.deleteMany();
+  await prisma.card.deleteMany();
+  await prisma.column.deleteMany();
+  await prisma.board.deleteMany();
+
   const board = await prisma.board.create({
     data: {
       title: "Meu Primeiro Board",
@@ -15,26 +22,31 @@ async function main() {
       columns: {
         create: [
           {
-            title: "To Do",
+            title: "A Fazer",
             position: 1,
             cards: {
               create: [
-                { title: "Configurar Banco de Dados", position: 1, priority: "High", tags: ["Backend"] },
-                { title: "Criar API Routes", position: 2, priority: "Medium", tags: ["API"] },
+                { 
+                  title: "Explorar novas funções", 
+                  position: 1, 
+                  priority: "High",
+                  checklists: {
+                    create: [
+                      { text: "Testar Checklists", position: 1 },
+                      { text: "Criar uma Tag", position: 2 }
+                    ]
+                  }
+                },
+                { title: "Personalizar Cores", position: 2, priority: "Medium" },
               ],
             },
           },
           {
-            title: "Doing",
+            title: "Em Execução",
             position: 2,
-            cards: {
-              create: [
-                { title: "Integrar Prisma", position: 1, priority: "High", tags: ["Prisma"] },
-              ],
-            },
           },
           {
-            title: "Done",
+            title: "Concluído",
             position: 3,
           },
         ],
@@ -42,7 +54,7 @@ async function main() {
     },
   });
 
-  console.log({ board });
+  console.log("Banco de dados populado com sucesso!", { boardId: board.id });
 }
 
 main()

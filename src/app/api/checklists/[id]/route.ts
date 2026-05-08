@@ -8,22 +8,19 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { tagIds, dueDate, ...rest } = body;
+    const { completed, text } = body;
 
-    const card = await prisma.card.update({
+    const item = await prisma.checklistItem.update({
       where: { id },
       data: {
-        ...rest,
-        dueDate: dueDate !== undefined ? (dueDate ? new Date(dueDate) : null) : undefined,
-        tags: tagIds !== undefined ? {
-          set: tagIds.map((tid: string) => ({ id: tid }))
-        } : undefined,
+        completed: completed !== undefined ? completed : undefined,
+        text: text !== undefined ? text : undefined,
       },
     });
 
-    return NextResponse.json(card);
+    return NextResponse.json(item);
   } catch (error) {
-    console.error("Error updating card:", error);
+    console.error("Error updating checklist item:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
@@ -34,14 +31,10 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    
-    await prisma.card.delete({
-      where: { id },
-    });
-
+    await prisma.checklistItem.delete({ where: { id } });
     return new Response(null, { status: 204 });
   } catch (error) {
-    console.error("Error deleting card:", error);
+    console.error("Error deleting checklist item:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

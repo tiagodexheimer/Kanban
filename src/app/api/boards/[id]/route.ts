@@ -3,18 +3,25 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
     const board = await prisma.board.findUnique({
       where: { id },
       include: {
+        tags: true,
         columns: {
           orderBy: { position: "asc" },
           include: {
             cards: {
               orderBy: { position: "asc" },
+              include: {
+                tags: true,
+                checklists: {
+                  orderBy: { position: "asc" },
+                },
+              },
             },
           },
         },

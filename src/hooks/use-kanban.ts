@@ -1,14 +1,31 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+export interface ChecklistItem {
+  id: string;
+  text: string;
+  completed: boolean;
+  position: number;
+  cardId: string;
+}
+
+export interface Tag {
+  id: string;
+  name: string;
+  color: string;
+  boardId: string;
+}
+
 export interface Card {
   id: string;
   title: string;
   description?: string;
   priority: string;
-  tags: string[];
+  tags: Tag[];
+  checklists: ChecklistItem[];
   position: number;
   columnId: string;
+  dueDate?: string | Date | null;
 }
 
 export interface Column {
@@ -23,6 +40,7 @@ export interface Board {
   title: string;
   description?: string;
   columns: Column[];
+  tags: Tag[];
 }
 
 export function useBoards() {
@@ -52,10 +70,10 @@ export function useUpdateCard() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ id, ...data }: Partial<Card> & { id: string }) => {
+    mutationFn: async ({ id, tagIds, ...data }: Partial<Card> & { id: string; tagIds?: string[] }) => {
       const res = await fetch(`/api/cards/${id}`, {
         method: "PATCH",
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, tagIds }),
       });
       return res.json();
     },
@@ -73,14 +91,14 @@ export function useUpdateCard() {
             if (col.id === newData.columnId) {
               const card = old.columns.flatMap(c => c.cards).find(c => c.id === id);
               if (card) {
-                const updatedCard = { ...card, ...newData };
+                const updatedCard = { ...card, ...newData } as Card;
                 newCards.push(updatedCard);
                 newCards.sort((a, b) => a.position - b.position);
               }
             } else if (!newData.columnId) {
               const card = col.cards.find(c => c.id === id);
               if (card) {
-                newCards = col.cards.map(c => c.id === id ? { ...c, ...newData } : c);
+                newCards = col.cards.map(c => c.id === id ? { ...c, ...newData } : c) as Card[];
               }
             }
             
@@ -184,6 +202,68 @@ export function useCreateColumn() {
     },
     onError: () => {
       toast.error("Erro ao criar coluna");
+    }
+  });
+}
+
+// Checklist Hooks
+export function useCreateChecklistItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { text: string; cardId: string; position: number }) => {
+      const res = await fetch("/api/checklists", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["board"] });
+    }
+  });
+}
+
+export function useUpdateChecklistItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: Partial<ChecklistItem> & { id: string }) => {
+      const res = await fetch(`/api/checklists/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["board"] });
+    }
+  });
+}
+
+export function useDeleteChecklistItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await fetch(`/api/checklists/${id}`, { method: "DELETE" });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["board"] });
+    }
+  });
+}
+
+// Tag Hooks
+export function useCreateTag() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { name: string; color: string; boardId: string }) => {
+      const res = await fetch("/api/tags", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["board"] });
     }
   });
 }

@@ -1,9 +1,10 @@
-"use client";
-
 import React, { useState, useEffect } from "react";
 import { Modal } from "../ui/modal";
 import { useBoards, useBoard, useUpdateCard, useCreateCard, useDeleteCard } from "@/hooks/use-kanban";
+import { ChecklistEditor } from "./checklist-editor";
+import { TagSelector } from "./tag-selector";
 import { cn } from "@/lib/utils";
+import { Calendar } from "lucide-react";
 
 interface CardModalProps {
   isOpen: boolean;
@@ -24,30 +25,42 @@ export function CardModal({ isOpen, onClose, columnId, cardId }: CardModalProps)
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("Medium");
+  const [dueDate, setDueDate] = useState<string>("");
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
 
   const isEditing = !!cardId;
+  const currentCard = isEditing ? board?.columns.flatMap(c => c.cards).find(c => c.id === cardId) : null;
 
   useEffect(() => {
-    if (isEditing && cardId && board) {
-      const card = board.columns.flatMap(c => c.cards).find(c => c.id === cardId);
-      if (card) {
-        setTitle(card.title);
-        setDescription(card.description || "");
-        setPriority(card.priority);
-      }
+    if (isEditing && currentCard) {
+      setTitle(currentCard.title);
+      setDescription(currentCard.description || "");
+      setPriority(currentCard.priority);
+      setDueDate(currentCard.dueDate ? new Date(currentCard.dueDate).toISOString().split('T')[0] : "");
+      setSelectedTagIds(currentCard.tags.map(t => t.id));
     } else {
       setTitle("");
       setDescription("");
       setPriority("Medium");
+      setDueDate("");
+      setSelectedTagIds([]);
     }
-  }, [isOpen, cardId, board, isEditing]);
+  }, [isOpen, cardId, board, isEditing, currentCard]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
 
+    const cardData = {
+      title,
+      description,
+      priority,
+      dueDate: dueDate || null,
+      tagIds: selectedTagIds
+    };
+
     if (isEditing && cardId) {
-      updateCardMutation.mutate({ id: cardId, title, description, priority });
+      updateCardMutation.mutate({ id: cardId, ...cardData });
     } else if (columnId) {
       createCardMutation.mutate({ title, columnId, position: 0 });
     }
@@ -68,54 +81,81 @@ export function CardModal({ isOpen, onClose, columnId, cardId }: CardModalProps)
     <Modal 
       isOpen={isOpen} 
       onClose={onClose} 
-      title={isEditing ? "Editar Tarefa" : "Nova Tarefa"}
+      title={isEditing ? "Detalhes da Tarefa" : "Nova Tarefa"}
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">Título</label>
-          <input
-            autoFocus
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="O que precisa ser feito?"
-            className="w-full bg-accent/50 border border-border rounded-lg p-2.5 text-foreground focus:ring-2 focus:ring-primary outline-none transition-all"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-1">Descrição</label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Adicione mais detalhes..."
-            rows={3}
-            className="w-full bg-accent/50 border border-border rounded-lg p-2.5 text-foreground focus:ring-2 focus:ring-primary outline-none transition-all resize-none"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-muted-foreground mb-2">Prioridade</label>
-          <div className="flex gap-2">
-            {["Low", "Medium", "High", "Urgent"].map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPriority(p)}
-                className={cn(
-                  "flex-1 py-1.5 rounded-md text-xs font-bold transition-all border",
-                  priority === p 
-                    ? "bg-primary text-primary-foreground border-primary" 
-                    : "bg-accent/50 text-muted-foreground border-transparent hover:border-border"
-                )}
-              >
-                {p}
-              </button>
-            ))}
+      <form onSubmit={handleSubmit} className="space-y-6 max-h-[80vh] overflow-y-auto px-1 custom-scrollbar">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-muted-foreground uppercase mb-1.5 ml-1">Título</label>
+            <input
+              autoFocus
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="O que precisa ser feito?"
+              className="w-full bg-accent/30 border border-border/50 rounded-xl p-3 text-foreground focus:ring-2 focus:ring-primary outline-none transition-all font-medium"
+            />
           </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-muted-foreground uppercase mb-1.5 ml-1">Prioridade</label>
+              <select 
+                value={priority}
+                onChange={(e) => setPriority(e.target.value)}
+                className="w-full bg-accent/30 border border-border/50 rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="Low">Baixa</option>
+                <option value="Medium">Média</option>
+                <option value="High">Alta</option>
+                <option value="Urgent">Urgente</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-muted-foreground uppercase mb-1.5 ml-1">Prazo</label>
+              <div className="relative">
+                <input
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  className="w-full bg-accent/30 border border-border/50 rounded-xl p-2.5 pl-9 text-sm outline-none focus:ring-2 focus:ring-primary"
+                />
+                <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-muted-foreground uppercase mb-1.5 ml-1">Descrição</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Adicione mais detalhes..."
+              rows={3}
+              className="w-full bg-accent/30 border border-border/50 rounded-xl p-3 text-sm text-foreground focus:ring-2 focus:ring-primary outline-none transition-all resize-none"
+            />
+          </div>
+
+          {board && (
+            <TagSelector 
+              boardId={board.id}
+              availableTags={board.tags}
+              selectedTagIds={selectedTagIds}
+              onChange={setSelectedTagIds}
+            />
+          )}
+
+          {isEditing && cardId && currentCard && (
+            <div className="pt-2 border-t border-border/50">
+              <ChecklistEditor 
+                cardId={cardId} 
+                items={currentCard.checklists} 
+              />
+            </div>
+          )}
         </div>
 
-        <div className="flex items-center justify-between pt-4 gap-3">
+        <div className="flex items-center justify-between pt-4 gap-3 sticky bottom-0 bg-background/80 backdrop-blur-sm pb-2">
           {isEditing && (
             <button
               type="button"
@@ -137,7 +177,7 @@ export function CardModal({ isOpen, onClose, columnId, cardId }: CardModalProps)
               type="submit"
               className="px-6 py-2 text-sm font-bold bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity shadow-lg shadow-primary/20"
             >
-              {isEditing ? "Salvar" : "Criar"}
+              {isEditing ? "Salvar Alterações" : "Criar Tarefa"}
             </button>
           </div>
         </div>

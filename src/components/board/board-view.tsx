@@ -20,7 +20,13 @@ import {
   SortableContext, 
   horizontalListSortingStrategy 
 } from "@dnd-kit/sortable";
-import { useBoards, useBoard, useUpdateCard, useCreateCard, useCreateColumn } from "@/hooks/use-kanban";
+import { 
+  useBoards, 
+  useBoard, 
+  useUpdateCard, 
+  useCreateCard, 
+  useCreateColumn 
+} from "@/hooks/use-kanban";
 import { Column } from "./column";
 import { Card } from "./card";
 import { CardModal } from "./card-modal";
@@ -40,7 +46,7 @@ export function BoardView() {
 
   const handleAddColumn = () => {
     const title = prompt("Título da nova lista:");
-    if (title && boardId) {
+    if (title && boardId && board) {
       createColumnMutation.mutate({ 
         title, 
         boardId, 
@@ -59,7 +65,33 @@ export function BoardView() {
   }
 
   if (!board) {
-    return <div className="text-center p-12 text-muted-foreground border-2 border-dashed rounded-xl">Nenhum quadro encontrado. Crie um para começar.</div>;
+    const handleCreateFirstBoard = async () => {
+      const title = prompt("Título do seu novo quadro:");
+      if (title) {
+        const res = await fetch("/api/boards", {
+          method: "POST",
+          body: JSON.stringify({ title, description: "Meu novo workspace" }),
+        });
+        if (res.ok) {
+          window.location.reload();
+        }
+      }
+    };
+
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-6 animate-in fade-in zoom-in duration-500">
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-bold text-foreground">Nenhum quadro encontrado</h2>
+          <p className="text-muted-foreground">Parece que seu workspace está vazio. Vamos começar?</p>
+        </div>
+        <button 
+          onClick={handleCreateFirstBoard}
+          className="px-8 py-3 bg-primary text-primary-foreground font-bold rounded-2xl hover:opacity-90 transition-all shadow-xl shadow-primary/20 hover:scale-105 active:scale-95"
+        >
+          Criar Meu Primeiro Quadro
+        </button>
+      </div>
+    );
   }
 
   const openEditModal = (cardId: string, columnId: string) => {

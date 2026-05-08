@@ -63,6 +63,32 @@ Foco em tornar o sistema resiliente e funcional.
 - [x] Implementação de "Optimistic Updates" para o DND não parecer lento.
 - [x] Finalização do fluxo de persistência e tratamento de erros (Notificações Sonner).
 
+### **Sprint 3: Atributos Avançados & Tags (Semana 3)**
+Foco em enriquecer a informação de cada tarefa.
+- [x] Sistema de Tags coloridas e gerenciáveis.
+- [x] Checklists dentro dos cards com progresso visual.
+- [x] Datas de entrega (Due Dates) com alertas visuais de atraso.
+
+### **Sprint 4: Multi-visualizações & Filtros (Semana 4)**
+Aumentar a versatilidade do workspace.
+- [ ] Visualização em **Lista** (compacta e rápida).
+- [ ] Visualização em **Calendário** para prazos.
+- [ ] Sistema de filtros por prioridade, tags e busca textual.
+- [ ] Ordenação personalizada (por data, prioridade, etc).
+
+### **Sprint 5: Colaboração & Workspace (Semana 5)**
+Transformar em uma ferramenta multi-usuário.
+- [ ] Autenticação com NextAuth (Google, GitHub, E-mail).
+- [ ] Atribuição de tarefas para diferentes membros da equipe.
+- [ ] Comentários em tempo real dentro dos cards.
+- [ ] Histórico de atividades (Activity Log).
+
+### **Sprint 6: Automações & Dashboards (Semana 6)**
+Inspirado na inteligência do ClickUp.
+- [ ] Automações simples (ex: "Mover para Done ao concluir checklist").
+- [ ] Dashboard com gráficos de Burn-down e produtividade.
+- [ ] Dark/Light mode toggle avançado com temas customizáveis.
+
 ---
 
 ## 🚀 Backlog de Prioridades (Tarefa para Engenheiro)
