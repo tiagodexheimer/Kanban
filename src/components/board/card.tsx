@@ -37,9 +37,11 @@ export function Card({ card, onClick }: CardProps) {
     <div
       ref={setNodeRef}
       style={style}
+      {...attributes}
+      {...listeners}
       onClick={onClick}
       className={cn(
-        "group relative bg-card border border-border p-4 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer mb-3",
+        "group relative bg-card border border-border p-4 rounded-xl shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing mb-3",
         isDragging && "opacity-50 grayscale"
       )}
     >
@@ -57,14 +59,9 @@ export function Card({ card, onClick }: CardProps) {
           </div>
           <h4 className="font-medium text-foreground leading-tight">{card.title}</h4>
         </div>
-        <button 
-          {...attributes} 
-          {...listeners}
-          onClick={(e) => e.stopPropagation()}
-          className="opacity-0 group-hover:opacity-100 p-1 hover:bg-accent rounded transition-opacity cursor-grab active:cursor-grabbing"
-        >
-          <GripVertical size={16} className="text-muted-foreground" />
-        </button>
+        <div className="p-1 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors">
+          <GripVertical size={16} />
+        </div>
       </div>
 
       <div className="mt-4 flex items-center justify-between text-muted-foreground">

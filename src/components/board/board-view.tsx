@@ -20,7 +20,7 @@ import {
   SortableContext, 
   horizontalListSortingStrategy 
 } from "@dnd-kit/sortable";
-import { useBoards, useBoard, useUpdateCard, useCreateCard } from "@/hooks/use-kanban";
+import { useBoards, useBoard, useUpdateCard, useCreateCard, useCreateColumn } from "@/hooks/use-kanban";
 import { Column } from "./column";
 import { Card } from "./card";
 import { CardModal } from "./card-modal";
@@ -32,10 +32,22 @@ export function BoardView() {
   
   const { data: board, isLoading: isLoadingBoard } = useBoard(boardId!);
   const updateCardMutation = useUpdateCard();
+  const createColumnMutation = useCreateColumn();
 
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalData, setModalData] = useState<{ cardId?: string; columnId?: string }>({});
+
+  const handleAddColumn = () => {
+    const title = prompt("Título da nova lista:");
+    if (title && boardId) {
+      createColumnMutation.mutate({ 
+        title, 
+        boardId, 
+        position: board.columns.length + 1 
+      });
+    }
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -138,7 +150,10 @@ export function BoardView() {
           ))}
         </SortableContext>
         
-        <button className="w-80 shrink-0 h-12 flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border hover:border-primary hover:text-primary transition-all text-muted-foreground font-medium">
+        <button 
+          onClick={handleAddColumn}
+          className="w-80 shrink-0 h-12 flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border hover:border-primary hover:text-primary transition-all text-muted-foreground font-medium"
+        >
           + Adicionar Lista
         </button>
       </div>

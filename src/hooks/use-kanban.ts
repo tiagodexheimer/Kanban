@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export interface Card {
   id: string;
@@ -58,7 +59,47 @@ export function useUpdateCard() {
       });
       return res.json();
     },
-    onSuccess: (data) => {
+    onMutate: async ({ id, ...newData }) => {
+      await queryClient.cancelQueries({ queryKey: ["board"] });
+      const previousBoard = queryClient.getQueryData<Board>(["board"]);
+
+      if (previousBoard) {
+        queryClient.setQueryData<Board>(["board"], (old) => {
+          if (!old) return old;
+          
+          const newColumns = old.columns.map(col => {
+            let newCards = col.cards.filter(c => c.id !== id);
+            
+            if (col.id === newData.columnId) {
+              const card = old.columns.flatMap(c => c.cards).find(c => c.id === id);
+              if (card) {
+                const updatedCard = { ...card, ...newData };
+                newCards.push(updatedCard);
+                newCards.sort((a, b) => a.position - b.position);
+              }
+            } else if (!newData.columnId) {
+              const card = col.cards.find(c => c.id === id);
+              if (card) {
+                newCards = col.cards.map(c => c.id === id ? { ...c, ...newData } : c);
+              }
+            }
+            
+            return { ...col, cards: newCards };
+          });
+
+          return { ...old, columns: newColumns };
+        });
+      }
+
+      return { previousBoard };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousBoard) {
+        queryClient.setQueryData(["board"], context.previousBoard);
+      }
+      toast.error("Erro ao sincronizar tarefa");
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["board"] });
     },
   });
@@ -77,7 +118,11 @@ export function useCreateCard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["board"] });
+      toast.success("Tarefa criada com sucesso!");
     },
+    onError: () => {
+      toast.error("Erro ao criar tarefa");
+    }
   });
 }
 
@@ -88,8 +133,57 @@ export function useDeleteCard() {
     mutationFn: async (id: string) => {
       await fetch(`/api/cards/${id}`, { method: "DELETE" });
     },
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["board"] });
+      const previousBoard = queryClient.getQueryData<Board>(["board"]);
+
+      if (previousBoard) {
+        queryClient.setQueryData<Board>(["board"], (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            columns: old.columns.map(col => ({
+              ...col,
+              cards: col.cards.filter(c => c.id !== id)
+            }))
+          };
+        });
+      }
+
+      return { previousBoard };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousBoard) {
+        queryClient.setQueryData(["board"], context.previousBoard);
+      }
+      toast.error("Erro ao excluir tarefa");
+    },
     onSuccess: () => {
+      toast.success("Tarefa excluída");
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["board"] });
     },
+  });
+}
+
+export function useCreateColumn() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (data: { title: string; boardId: string; position: number }) => {
+      const res = await fetch("/api/columns", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["board"] });
+      toast.success("Coluna criada!");
+    },
+    onError: () => {
+      toast.error("Erro ao criar coluna");
+    }
   });
 }

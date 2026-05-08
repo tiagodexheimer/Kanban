@@ -57,11 +57,11 @@ Foco em entregar uma experiência de uso "snappy" e visualmente atraente.
 
 ### **Sprint 2: Backend, API & Persistência (Semana 2)**
 Foco em tornar o sistema resiliente e funcional.
-- [ ] Modelagem do banco de dados e configuração do ORM.
-- [ ] Desenvolvimento da API REST/GraphQL para CRUD de Boards, Lists e Cards.
-- [ ] Integração do Frontend com a API (Fetch/TanStack Query).
-- [ ] Implementação de "Optimistic Updates" para o DND não parecer lento.
-- [ ] Finalização do fluxo de persistência e tratamento de erros.
+- [x] Modelagem do banco de dados e configuração do ORM (Prisma).
+- [x] Desenvolvimento da API REST/GraphQL para CRUD de Boards, Lists e Cards.
+- [x] Integração do Frontend com a API (Fetch/TanStack Query).
+- [x] Implementação de "Optimistic Updates" para o DND não parecer lento.
+- [x] Finalização do fluxo de persistência e tratamento de erros (Notificações Sonner).
 
 ---
 
