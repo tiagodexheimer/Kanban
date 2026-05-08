@@ -20,3 +20,21 @@ export async function PATCH(
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    
+    await prisma.column.delete({
+      where: { id },
+    });
+
+    return new Response(null, { status: 204 });
+  } catch (error) {
+    console.error("Error deleting column:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}

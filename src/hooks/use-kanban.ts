@@ -206,6 +206,84 @@ export function useCreateColumn() {
   });
 }
 
+export function useUpdateColumn() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, ...data }: Partial<Column> & { id: string }) => {
+      const res = await fetch(`/api/columns/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      });
+      return res.json();
+    },
+    onMutate: async (newColumn) => {
+      await queryClient.cancelQueries({ queryKey: ["board"] });
+      const previousBoard = queryClient.getQueryData<Board>(["board"]);
+
+      if (previousBoard) {
+        queryClient.setQueryData<Board>(["board"], (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            columns: old.columns.map(col => 
+              col.id === newColumn.id ? { ...col, ...newColumn } : col
+            ).sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+          };
+        });
+      }
+
+      return { previousBoard };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousBoard) {
+        queryClient.setQueryData(["board"], context.previousBoard);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["board"] });
+    },
+  });
+}
+
+export function useDeleteColumn() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await fetch(`/api/columns/${id}`, { method: "DELETE" });
+    },
+    onMutate: async (columnId) => {
+      await queryClient.cancelQueries({ queryKey: ["board"] });
+      const previousBoard = queryClient.getQueryData<Board>(["board"]);
+
+      if (previousBoard) {
+        queryClient.setQueryData<Board>(["board"], (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            columns: old.columns.filter(col => col.id !== columnId)
+          };
+        });
+      }
+
+      return { previousBoard };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousBoard) {
+        queryClient.setQueryData(["board"], context.previousBoard);
+      }
+      toast.error("Erro ao excluir lista");
+    },
+    onSuccess: () => {
+      toast.success("Lista excluída");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["board"] });
+    },
+  });
+}
+
 // Checklist Hooks
 export function useCreateChecklistItem() {
   const queryClient = useQueryClient();
@@ -264,6 +342,10 @@ export function useCreateTag() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["board"] });
+      toast.success("Etiqueta criada!");
+    },
+    onError: () => {
+      toast.error("Erro ao criar etiqueta");
     }
   });
 }

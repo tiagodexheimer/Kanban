@@ -89,23 +89,30 @@ export function ChecklistEditor({ cardId, items }: ChecklistEditorProps) {
           </div>
 
           {/* Novo Item */}
-          <form onSubmit={handleAddItem} className="flex items-center gap-2 pl-7">
+          <div className="flex items-center gap-2 pl-7">
             <input
               type="text"
               placeholder="Adicionar item..."
               value={newItemText}
               onChange={(e) => setNewItemText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAddItem(e as any);
+                }
+              }}
               className="flex-1 bg-transparent border-none p-0 text-sm focus:ring-0 outline-none italic text-muted-foreground hover:text-foreground transition-colors"
             />
             {newItemText && (
               <button 
-                type="submit"
+                type="button"
+                onClick={handleAddItem}
                 className="p-1 bg-primary/10 text-primary rounded hover:bg-primary/20 transition-colors"
               >
                 <Plus size={14} />
               </button>
             )}
-          </form>
+          </div>
         </div>
       )}
     </div>

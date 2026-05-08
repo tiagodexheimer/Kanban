@@ -85,13 +85,19 @@ export function TagSelector({ boardId, availableTags, selectedTagIds, onChange }
       </div>
 
       {isAdding && (
-        <form onSubmit={handleCreateTag} className="p-3 bg-accent/30 rounded-xl space-y-3 animate-in fade-in zoom-in-95 duration-200">
+        <div className="p-3 bg-accent/30 rounded-xl space-y-3 animate-in fade-in zoom-in-95 duration-200">
           <input
             autoFocus
             type="text"
             placeholder="Nome da etiqueta..."
             value={newTagName}
             onChange={(e) => setNewTagName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleCreateTag(e as any);
+              }
+            }}
             className="w-full bg-background border border-border rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-primary"
           />
           <div className="flex flex-wrap gap-2">
@@ -109,12 +115,13 @@ export function TagSelector({ boardId, availableTags, selectedTagIds, onChange }
             ))}
           </div>
           <button
-            type="submit"
+            type="button"
+            onClick={handleCreateTag}
             className="w-full py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-lg hover:opacity-90 transition-opacity"
           >
             Criar Etiqueta
           </button>
-        </form>
+        </div>
       )}
     </div>
   );

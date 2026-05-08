@@ -22,12 +22,16 @@ import {
   useBoards, 
   useBoard, 
   useUpdateCard, 
-  useCreateColumn 
+  useCreateColumn,
+  useUpdateColumn,
+  Column as ColumnType
 } from "@/hooks/use-kanban";
+import { arrayMove } from "@dnd-kit/sortable";
 import { Column } from "./column";
 import { Card } from "./card";
 import { CardModal } from "./card-modal";
 import { createPortal } from "react-dom";
+import { useEffect } from "react";
 
 export function BoardView() {
   const { data: boards, isLoading: isLoadingBoards } = useBoards();
@@ -38,8 +42,19 @@ export function BoardView() {
   const createColumnMutation = useCreateColumn();
 
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const [activeColumnId, setActiveColumnId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalData, setModalData] = useState<{ cardId?: string; columnId?: string }>({});
+  
+  // Local state for smooth column reordering
+  const [localColumns, setLocalColumns] = useState<ColumnType[]>([]);
+
+  // Update local columns when board data changes
+  useEffect(() => {
+    if (board?.columns) {
+      setLocalColumns(board.columns);
+    }
+  }, [board?.columns]);
 
   const handleAddColumn = () => {
     const title = prompt("Título da nova lista:");
@@ -56,6 +71,8 @@ export function BoardView() {
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
+
+  const updateColumnMutation = useUpdateColumn();
 
   if (isLoadingBoards || (boardId && isLoadingBoard)) {
     return <div className="flex items-center justify-center h-64 text-muted-foreground italic">Carregando quadro...</div>;
@@ -102,7 +119,14 @@ export function BoardView() {
   };
 
   function handleDragStart(event: DragStartEvent) {
-    setActiveCardId(event.active.id as string);
+    const { active } = event;
+    const type = active.data.current?.type;
+
+    if (type === 'Column') {
+      setActiveColumnId(active.id as string);
+    } else {
+      setActiveCardId(active.id as string);
+    }
   }
 
   function handleDragOver(event: DragOverEvent) {
@@ -113,6 +137,20 @@ export function BoardView() {
     const overId = over.id as string;
 
     if (activeId === overId) return;
+
+    const activeType = active.data.current?.type;
+    const overType = over.data.current?.type;
+
+    if (activeType === 'Column' && overType === 'Column') {
+      setLocalColumns((items) => {
+        const oldIndex = items.findIndex((i) => i.id === activeId);
+        const newIndex = items.findIndex((i) => i.id === overId);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+      return;
+    }
+
+    if (activeType === 'Column') return;
 
     const activeCard = board?.columns.flatMap(c => c.cards).find(c => c.id === activeId);
     if (!activeCard) return;
@@ -134,29 +172,50 @@ export function BoardView() {
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
+    
     if (!over) {
       setActiveCardId(null);
+      setActiveColumnId(null);
       return;
     }
 
     const activeId = active.id as string;
     const overId = over.id as string;
+    const activeType = active.data.current?.type;
 
-    const activeCard = board?.columns.flatMap(c => c.cards).find(c => c.id === activeId);
-    const overCard = board?.columns.flatMap(c => c.cards).find(c => c.id === overId);
-
-    if (activeCard && overCard && activeCard.columnId === overCard.columnId) {
+    if (activeType === 'Column') {
       if (activeId !== overId) {
-        updateCardMutation.mutate({ id: activeId, position: overCard.position });
+        const oldIndex = localColumns.findIndex((i) => i.id === activeId);
+        const newIndex = localColumns.findIndex((i) => i.id === overId);
+        const newOrder = arrayMove(localColumns, oldIndex, newIndex);
+        
+        // Persist new positions for all affected columns
+        newOrder.forEach((col, index) => {
+          if (col.position !== index) {
+            updateColumnMutation.mutate({ id: col.id, position: index });
+          }
+        });
+      }
+    } else {
+      const activeCard = board?.columns.flatMap(c => c.cards).find(c => c.id === activeId);
+      const overCard = board?.columns.flatMap(c => c.cards).find(c => c.id === overId);
+
+      if (activeCard && overCard && activeCard.columnId === overCard.columnId) {
+        if (activeId !== overId) {
+          updateCardMutation.mutate({ id: activeId, position: overCard.position });
+        }
       }
     }
 
     setActiveCardId(null);
+    setActiveColumnId(null);
   }
 
-  const columnIds = board.columns.map(c => c.id);
+  const columnsToRender = localColumns.length > 0 ? localColumns : (board?.columns || []);
+  const columnIds = columnsToRender.map(c => c.id);
   const allCards = board.columns.flatMap(c => c.cards);
   const activeCard = allCards.find(c => c.id === activeCardId);
+  const activeColumn = columnsToRender.find(c => c.id === activeColumnId);
 
   return (
     <DndContext
@@ -168,7 +227,7 @@ export function BoardView() {
     >
       <div className="flex gap-6 h-full pb-8 overflow-x-auto custom-scrollbar">
         <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
-          {board.columns.map(column => (
+          {columnsToRender.map(column => (
             <Column 
               key={column.id} 
               column={column} 
@@ -197,6 +256,14 @@ export function BoardView() {
       {typeof document !== 'undefined' && createPortal(
         <DragOverlay>
           {activeCard ? <Card card={activeCard} /> : null}
+          {activeColumn ? (
+            <Column 
+              column={activeColumn} 
+              cards={activeColumn.cards} 
+              onEditCard={() => {}} 
+              onAddCard={() => {}} 
+            />
+          ) : null}
         </DragOverlay>,
         document.body
       )}

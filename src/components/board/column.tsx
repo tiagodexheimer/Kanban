@@ -3,9 +3,9 @@
 import React from "react";
 import { useSortable, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Column as ColumnType, Card as CardType } from "@/hooks/use-kanban";
+import { Column as ColumnType, Card as CardType, useUpdateColumn, useDeleteColumn } from "@/hooks/use-kanban";
 import { Card } from "./card";
-import { Plus, MoreHorizontal } from "lucide-react";
+import { Plus, MoreHorizontal, Check, X, GripVertical, Trash2 } from "lucide-react";
 
 interface ColumnProps {
   column: ColumnType;
@@ -15,10 +15,31 @@ interface ColumnProps {
 }
 
 export function Column({ column, cards, onEditCard, onAddCard }: ColumnProps) {
+  const [isEditingTitle, setIsEditingTitle] = React.useState(false);
+  const [editedTitle, setEditedTitle] = React.useState(column.title);
+  const updateColumnMutation = useUpdateColumn();
+  const deleteColumnMutation = useDeleteColumn();
+
+  const handleTitleSubmit = () => {
+    if (editedTitle.trim() && editedTitle !== column.title) {
+      updateColumnMutation.mutate({ id: column.id, title: editedTitle });
+    }
+    setIsEditingTitle(false);
+  };
+
+  const handleDeleteColumn = () => {
+    if (confirm(`Deseja excluir a lista "${column.title}" e todas as suas tarefas?`)) {
+      deleteColumnMutation.mutate(column.id);
+    }
+  };
+
   const {
+    attributes,
+    listeners,
     setNodeRef,
     transform,
-    transition
+    transition,
+    isDragging
   } = useSortable({ 
     id: column.id,
     data: { type: 'Column' }
@@ -27,6 +48,7 @@ export function Column({ column, cards, onEditCard, onAddCard }: ColumnProps) {
   const style = {
     transform: CSS.Translate.toString(transform),
     transition,
+    opacity: isDragging ? 0.5 : 1,
   };
 
   const cardIds = cards.map(c => c.id);
@@ -38,18 +60,61 @@ export function Column({ column, cards, onEditCard, onAddCard }: ColumnProps) {
       className="flex flex-col w-80 shrink-0 min-h-[500px]"
     >
       <div className="flex items-center justify-between mb-4 px-2">
-        <div className="flex items-center gap-2">
-          <h3 className="font-bold text-foreground">{column.title}</h3>
-          <span className="bg-accent text-muted-foreground text-xs font-bold px-2 py-0.5 rounded-full">
-            {cards.length}
-          </span>
+        <div className="flex items-center gap-2 flex-1 mr-2 overflow-hidden">
+          <div 
+            {...attributes} 
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing p-1 hover:bg-accent rounded text-muted-foreground shrink-0"
+          >
+            <GripVertical size={16} />
+          </div>
+          
+          {isEditingTitle ? (
+            <div className="flex items-center gap-1 w-full" onClick={e => e.stopPropagation()}>
+              <input
+                autoFocus
+                type="text"
+                value={editedTitle}
+                onChange={(e) => setEditedTitle(e.target.value)}
+                onBlur={handleTitleSubmit}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleTitleSubmit();
+                  if (e.key === 'Escape') {
+                    setEditedTitle(column.title);
+                    setIsEditingTitle(false);
+                  }
+                }}
+                className="bg-accent/50 border border-primary rounded px-2 py-0.5 text-sm font-bold w-full outline-none"
+              />
+            </div>
+          ) : (
+            <div 
+              className="flex items-center gap-2 cursor-pointer group/title overflow-hidden"
+              onClick={() => setIsEditingTitle(true)}
+            >
+              <h3 className="font-bold text-foreground group-hover/title:text-primary transition-colors truncate">
+                {column.title}
+              </h3>
+              <span className="bg-accent text-muted-foreground text-xs font-bold px-2 py-0.5 rounded-full shrink-0">
+                {cards.length}
+              </span>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-1">
-          <button className="p-1.5 hover:bg-accent rounded-md text-muted-foreground transition-colors">
-            <Plus size={18} />
+          <button 
+            onClick={handleDeleteColumn}
+            className="p-1.5 hover:bg-destructive/10 rounded-md text-muted-foreground hover:text-destructive transition-colors"
+            title="Excluir lista"
+          >
+            <Trash2 size={18} />
           </button>
-          <button className="p-1.5 hover:bg-accent rounded-md text-muted-foreground transition-colors">
-            <MoreHorizontal size={18} />
+          <button 
+            onClick={onAddCard}
+            className="p-1.5 hover:bg-accent rounded-md text-muted-foreground hover:text-primary transition-colors"
+            title="Adicionar tarefa"
+          >
+            <Plus size={18} />
           </button>
         </div>
       </div>
