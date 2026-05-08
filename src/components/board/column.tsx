@@ -3,7 +3,7 @@
 import React from "react";
 import { useSortable, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Column as ColumnType, Card as CardType } from "@/store/use-board-store";
+import { Column as ColumnType, Card as CardType } from "@/hooks/use-kanban";
 import { Card } from "./card";
 import { Plus, MoreHorizontal } from "lucide-react";
 
@@ -30,6 +30,8 @@ export function Column({ column, cards, onEditCard, onAddCard }: ColumnProps) {
     transition,
   };
 
+  const cardIds = cards.map(c => c.id);
+
   return (
     <div
       ref={setNodeRef}
@@ -54,7 +56,7 @@ export function Column({ column, cards, onEditCard, onAddCard }: ColumnProps) {
       </div>
 
       <div className="flex-1 bg-accent/20 rounded-2xl p-3 border border-transparent hover:border-border transition-colors">
-        <SortableContext items={column.cardIds} strategy={verticalListSortingStrategy}>
+        <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
           {cards.map(card => (
             <Card key={card.id} card={card} onClick={() => onEditCard(card.id)} />
           ))}

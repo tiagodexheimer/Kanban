@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Modal } from "../ui/modal";
-import { useBoardStore, Priority } from "@/store/use-board-store";
+import { useBoards, useBoard, useUpdateCard, useCreateCard, useDeleteCard } from "@/hooks/use-kanban";
 import { cn } from "@/lib/utils";
 
 interface CardModalProps {
@@ -13,44 +13,52 @@ interface CardModalProps {
 }
 
 export function CardModal({ isOpen, onClose, columnId, cardId }: CardModalProps) {
-  const { cards, addCard, updateCard, deleteCard } = useBoardStore();
+  const { data: boards } = useBoards();
+  const boardId = boards?.[0]?.id;
+  const { data: board } = useBoard(boardId!);
+  
+  const createCardMutation = useCreateCard();
+  const updateCardMutation = useUpdateCard();
+  const deleteCardMutation = useDeleteCard();
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [priority, setPriority] = useState<Priority>("Medium");
+  const [priority, setPriority] = useState("Medium");
 
   const isEditing = !!cardId;
 
   useEffect(() => {
-    if (isEditing && cardId && cards[cardId]) {
-      const card = cards[cardId];
-      setTitle(card.title);
-      setDescription(card.description || "");
-      setPriority(card.priority);
+    if (isEditing && cardId && board) {
+      const card = board.columns.flatMap(c => c.cards).find(c => c.id === cardId);
+      if (card) {
+        setTitle(card.title);
+        setDescription(card.description || "");
+        setPriority(card.priority);
+      }
     } else {
       setTitle("");
       setDescription("");
       setPriority("Medium");
     }
-  }, [isOpen, cardId, cards, isEditing]);
+  }, [isOpen, cardId, board, isEditing]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
 
     if (isEditing && cardId) {
-      updateCard(cardId, { title, description, priority });
+      updateCardMutation.mutate({ id: cardId, title, description, priority });
     } else if (columnId) {
-      addCard(columnId, title);
-      // Aqui poderíamos atualizar os outros campos após criar o card básico
+      createCardMutation.mutate({ title, columnId, position: 0 });
     }
     
     onClose();
   };
 
   const handleDelete = () => {
-    if (isEditing && cardId && columnId) {
+    if (isEditing && cardId) {
       if (confirm("Tem certeza que deseja excluir esta tarefa?")) {
-        deleteCard(cardId, columnId);
+        deleteCardMutation.mutate(cardId);
         onClose();
       }
     }
@@ -89,7 +97,7 @@ export function CardModal({ isOpen, onClose, columnId, cardId }: CardModalProps)
         <div>
           <label className="block text-sm font-medium text-muted-foreground mb-2">Prioridade</label>
           <div className="flex gap-2">
-            {(["Low", "Medium", "High", "Urgent"] as Priority[]).map((p) => (
+            {["Low", "Medium", "High", "Urgent"].map((p) => (
               <button
                 key={p}
                 type="button"

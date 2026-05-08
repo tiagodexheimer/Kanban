@@ -1,9 +1,8 @@
 "use client";
 
-import React from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Card as CardType, Priority } from "@/store/use-board-store";
+import { Card as CardType } from "@/hooks/use-kanban";
 import { cn } from "@/lib/utils";
 import { GripVertical, MessageSquare, Paperclip } from "lucide-react";
 
@@ -12,7 +11,7 @@ interface CardProps {
   onClick?: () => void;
 }
 
-const priorityColors: Record<Priority, string> = {
+const priorityColors: Record<string, string> = {
   Low: "bg-blue-500/10 text-blue-500",
   Medium: "bg-yellow-500/10 text-yellow-500",
   High: "bg-orange-500/10 text-orange-500",
