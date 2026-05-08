@@ -18,8 +18,7 @@ export function Column({ column, cards, onEditCard, onAddCard }: ColumnProps) {
   const {
     setNodeRef,
     transform,
-    transition,
-    isDragging
+    transition
   } = useSortable({ 
     id: column.id,
     data: { type: 'Column' }

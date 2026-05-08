@@ -11,11 +11,9 @@ import {
   useSensors,
   DragStartEvent,
   DragOverEvent,
-  DragEndEvent,
-  defaultDropAnimationSideEffects
+  DragEndEvent
 } from "@dnd-kit/core";
 import { 
-  arrayMove, 
   sortableKeyboardCoordinates, 
   SortableContext, 
   horizontalListSortingStrategy 
@@ -24,7 +22,6 @@ import {
   useBoards, 
   useBoard, 
   useUpdateCard, 
-  useCreateCard, 
   useCreateColumn 
 } from "@/hooks/use-kanban";
 import { Column } from "./column";
@@ -174,8 +171,8 @@ export function BoardView() {
           {board.columns.map(column => (
             <Column 
               key={column.id} 
-              column={column as any} 
-              cards={column.cards as any} 
+              column={column} 
+              cards={column.cards} 
               onEditCard={(cardId) => openEditModal(cardId, column.id)}
               onAddCard={() => openCreateModal(column.id)}
             />
@@ -199,7 +196,7 @@ export function BoardView() {
 
       {typeof document !== 'undefined' && createPortal(
         <DragOverlay>
-          {activeCard ? <Card card={activeCard as any} /> : null}
+          {activeCard ? <Card card={activeCard} /> : null}
         </DragOverlay>,
         document.body
       )}
