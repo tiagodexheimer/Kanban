@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Board {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  themeColor  String?  @default("#7c3aed")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  columns     Column[]
+}
+
+model Column {
+  id        String   @id @default(uuid())
+  title     String
+  position  Int
+  boardId   String
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cards     Card[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([boardId])
+}
+
+model Card {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  position    Int
+  priority    String   @default("Medium")
+  tags        String[] @default([])
+  dueDate     DateTime?
+  columnId    String
+  column      Column   @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([columnId])
+}
