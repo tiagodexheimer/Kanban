@@ -6,15 +6,78 @@ datasource db {
   provider = "postgresql"
 }
 
+model User {
+  id            String    @id @default(uuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?   // Hashed password for CredentialsProvider
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  
+  // Workspace relations
+  ownedBoards   Board[]   @relation("BoardOwner")
+  memberBoards  Board[]   @relation("BoardMembers")
+  assignedCards Card[]    @relation("CardAssignees")
+  comments      Comment[]
+  activities    Activity[]
+}
+
+model Account {
+  id                 String  @id @default(uuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String? @db.Text
+  access_token       String? @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String? @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
 model Board {
   id          String   @id @default(uuid())
   title       String
   description String?
   themeColor  String?  @default("#7c3aed")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  
+  ownerId     String
+  owner       User     @relation("BoardOwner", fields: [ownerId], references: [id])
+  members     User[]   @relation("BoardMembers")
+  
   columns     Column[]
   tags        Tag[]
+  activities  Activity[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Column {
@@ -37,14 +100,50 @@ model Card {
   position    Int
   priority    String   @default("Medium")
   dueDate     DateTime?
+  
   columnId    String
   column      Column   @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  
   tags        Tag[]    @relation("CardTags")
+  assignees   User[]   @relation("CardAssignees")
   checklists  ChecklistItem[]
+  comments    Comment[]
+  activities  Activity[]
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([columnId])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  text      String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cardId    String
+  card      Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([cardId])
+  @@index([userId])
+}
+
+model Activity {
+  id        String   @id @default(uuid())
+  type      String   // e.g., "MOVE_CARD", "CREATE_CARD", "ADD_COMMENT"
+  description String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  boardId   String
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cardId    String?
+  card      Card?    @relation(fields: [cardId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+
+  @@index([boardId])
+  @@index([cardId])
 }
 
 model Tag {

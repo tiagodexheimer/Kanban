@@ -127,7 +127,15 @@ export function useCreateCard() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (data: { title: string; columnId: string; position: number }) => {
+    mutationFn: async (data: { 
+      title: string; 
+      columnId: string; 
+      position: number;
+      description?: string;
+      priority?: string;
+      dueDate?: string | null;
+      tagIds?: string[];
+    }) => {
       const res = await fetch("/api/cards", {
         method: "POST",
         body: JSON.stringify(data),

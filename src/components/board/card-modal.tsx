@@ -79,7 +79,15 @@ function CardForm({ card, columnId, onClose, boardTags, boardId }: CardFormProps
     if (card) {
       updateCardMutation.mutate({ id: card.id, ...cardData });
     } else if (columnId) {
-      createCardMutation.mutate({ title, columnId, position: 0 });
+      createCardMutation.mutate({ 
+        title, 
+        columnId, 
+        position: 0,
+        description,
+        priority,
+        dueDate: dueDate || null,
+        tagIds: selectedTagIds
+      });
     }
     
     onClose();

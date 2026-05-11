@@ -1,37 +1,21 @@
 "use client";
 
-import React, { useState } from "react";
-import { 
-  DndContext, 
-  DragOverlay, 
-  closestCorners, 
-  KeyboardSensor, 
-  PointerSensor, 
-  useSensor, 
-  useSensors,
-  DragStartEvent,
-  DragOverEvent,
-  DragEndEvent
-} from "@dnd-kit/core";
-import { 
-  sortableKeyboardCoordinates, 
-  SortableContext, 
-  horizontalListSortingStrategy 
-} from "@dnd-kit/sortable";
+import React, { useState, useMemo } from "react";
 import { 
   useBoards, 
   useBoard, 
   useUpdateCard, 
   useCreateColumn,
   useUpdateColumn,
-  Column as ColumnType
+  Column as ColumnType,
+  Card as CardType
 } from "@/hooks/use-kanban";
-import { arrayMove } from "@dnd-kit/sortable";
-import { Column } from "./column";
-import { Card } from "./card";
+import { useViewStore } from "@/store/use-view-store";
+import { FilterBar } from "./filter-bar";
+import { KanbanBoard } from "./kanban-board";
+import { ListView } from "./list-view";
+import { CalendarView } from "./calendar-view";
 import { CardModal } from "./card-modal";
-import { createPortal } from "react-dom";
-import { useEffect } from "react";
 
 export function BoardView() {
   const { data: boards, isLoading: isLoadingBoards } = useBoards();
@@ -40,21 +24,12 @@ export function BoardView() {
   const { data: board, isLoading: isLoadingBoard } = useBoard(boardId!);
   const updateCardMutation = useUpdateCard();
   const createColumnMutation = useCreateColumn();
+  const updateColumnMutation = useUpdateColumn();
 
-  const [activeCardId, setActiveCardId] = useState<string | null>(null);
-  const [activeColumnId, setActiveColumnId] = useState<string | null>(null);
+  const { currentView, filters } = useViewStore();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalData, setModalData] = useState<{ cardId?: string; columnId?: string }>({});
-  
-  // Local state for smooth column reordering
-  const [localColumns, setLocalColumns] = useState<ColumnType[]>([]);
-
-  // Update local columns when board data changes
-  useEffect(() => {
-    if (board?.columns) {
-      setLocalColumns(board.columns);
-    }
-  }, [board?.columns]);
 
   const handleAddColumn = () => {
     const title = prompt("Título da nova lista:");
@@ -67,12 +42,41 @@ export function BoardView() {
     }
   };
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
+  const openEditModal = (cardId: string, columnId: string) => {
+    setModalData({ cardId, columnId });
+    setIsModalOpen(true);
+  };
 
-  const updateColumnMutation = useUpdateColumn();
+  const openCreateModal = (columnId: string) => {
+    setModalData({ columnId });
+    setIsModalOpen(true);
+  };
+
+  // Filter and Sort Data
+  const filteredColumns = useMemo(() => {
+    if (!board) return [];
+
+    return board.columns.map(col => {
+      const filteredCards = col.cards.filter(card => {
+        // Search filter
+        const matchesSearch = filters.search === "" || 
+          card.title.toLowerCase().includes(filters.search.toLowerCase()) ||
+          card.description?.toLowerCase().includes(filters.search.toLowerCase());
+
+        // Priority filter
+        const matchesPriority = filters.priorities.length === 0 || 
+          filters.priorities.includes(card.priority);
+
+        // Tags filter
+        const matchesTags = filters.tags.length === 0 || 
+          card.tags.some(tag => filters.tags.includes(tag.id));
+
+        return matchesSearch && matchesPriority && matchesTags;
+      });
+
+      return { ...col, cards: filteredCards };
+    });
+  }, [board, filters]);
 
   if (isLoadingBoards || (boardId && isLoadingBoard)) {
     return <div className="flex items-center justify-center h-64 text-muted-foreground italic">Carregando quadro...</div>;
@@ -108,142 +112,36 @@ export function BoardView() {
     );
   }
 
-  const openEditModal = (cardId: string, columnId: string) => {
-    setModalData({ cardId, columnId });
-    setIsModalOpen(true);
-  };
-
-  const openCreateModal = (columnId: string) => {
-    setModalData({ columnId });
-    setIsModalOpen(true);
-  };
-
-  function handleDragStart(event: DragStartEvent) {
-    const { active } = event;
-    const type = active.data.current?.type;
-
-    if (type === 'Column') {
-      setActiveColumnId(active.id as string);
-    } else {
-      setActiveCardId(active.id as string);
-    }
-  }
-
-  function handleDragOver(event: DragOverEvent) {
-    const { active, over } = event;
-    if (!over) return;
-
-    const activeId = active.id as string;
-    const overId = over.id as string;
-
-    if (activeId === overId) return;
-
-    const activeType = active.data.current?.type;
-    const overType = over.data.current?.type;
-
-    if (activeType === 'Column' && overType === 'Column') {
-      setLocalColumns((items) => {
-        const oldIndex = items.findIndex((i) => i.id === activeId);
-        const newIndex = items.findIndex((i) => i.id === overId);
-        return arrayMove(items, oldIndex, newIndex);
-      });
-      return;
-    }
-
-    if (activeType === 'Column') return;
-
-    const activeCard = board?.columns.flatMap(c => c.cards).find(c => c.id === activeId);
-    if (!activeCard) return;
-
-    const isOverACard = !!board?.columns.flatMap(c => c.cards).find(c => c.id === overId);
-    const isOverAColumn = !!board?.columns.find(c => c.id === overId);
-
-    if (isOverACard) {
-      const overCard = board?.columns.flatMap(c => c.cards).find(c => c.id === overId);
-      if (overCard && activeCard.columnId !== overCard.columnId) {
-        updateCardMutation.mutate({ id: activeId, columnId: overCard.columnId, position: overCard.position });
-      }
-    } else if (isOverAColumn) {
-      if (activeCard.columnId !== overId) {
-        updateCardMutation.mutate({ id: activeId, columnId: overId, position: 0 });
-      }
-    }
-  }
-
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    
-    if (!over) {
-      setActiveCardId(null);
-      setActiveColumnId(null);
-      return;
-    }
-
-    const activeId = active.id as string;
-    const overId = over.id as string;
-    const activeType = active.data.current?.type;
-
-    if (activeType === 'Column') {
-      if (activeId !== overId) {
-        const oldIndex = localColumns.findIndex((i) => i.id === activeId);
-        const newIndex = localColumns.findIndex((i) => i.id === overId);
-        const newOrder = arrayMove(localColumns, oldIndex, newIndex);
-        
-        // Persist new positions for all affected columns
-        newOrder.forEach((col, index) => {
-          if (col.position !== index) {
-            updateColumnMutation.mutate({ id: col.id, position: index });
-          }
-        });
-      }
-    } else {
-      const activeCard = board?.columns.flatMap(c => c.cards).find(c => c.id === activeId);
-      const overCard = board?.columns.flatMap(c => c.cards).find(c => c.id === overId);
-
-      if (activeCard && overCard && activeCard.columnId === overCard.columnId) {
-        if (activeId !== overId) {
-          updateCardMutation.mutate({ id: activeId, position: overCard.position });
-        }
-      }
-    }
-
-    setActiveCardId(null);
-    setActiveColumnId(null);
-  }
-
-  const columnsToRender = localColumns.length > 0 ? localColumns : (board?.columns || []);
-  const columnIds = columnsToRender.map(c => c.id);
-  const allCards = board.columns.flatMap(c => c.cards);
-  const activeCard = allCards.find(c => c.id === activeCardId);
-  const activeColumn = columnsToRender.find(c => c.id === activeColumnId);
-
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCorners}
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragEnd={handleDragEnd}
-    >
-      <div className="flex gap-6 h-full pb-8 overflow-x-auto custom-scrollbar">
-        <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
-          {columnsToRender.map(column => (
-            <Column 
-              key={column.id} 
-              column={column} 
-              cards={column.cards} 
-              onEditCard={(cardId) => openEditModal(cardId, column.id)}
-              onAddCard={() => openCreateModal(column.id)}
-            />
-          ))}
-        </SortableContext>
-        
-        <button 
-          onClick={handleAddColumn}
-          className="w-80 shrink-0 h-12 flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border hover:border-primary hover:text-primary transition-all text-muted-foreground font-medium"
-        >
-          + Adicionar Lista
-        </button>
+    <div className="flex flex-col h-full overflow-hidden">
+      <FilterBar tags={board.tags} />
+
+      <div className="flex-1 overflow-auto min-h-0 custom-scrollbar">
+        {currentView === "board" && (
+          <KanbanBoard 
+            columns={filteredColumns} 
+            boardId={boardId!}
+            onEditCard={openEditModal}
+            onAddCard={openCreateModal}
+            onAddColumn={handleAddColumn}
+            onUpdateCard={updateCardMutation.mutate}
+            onUpdateColumn={updateColumnMutation.mutate}
+          />
+        )}
+
+        {currentView === "list" && (
+          <ListView 
+            columns={filteredColumns}
+            onEditCard={openEditModal}
+          />
+        )}
+
+        {currentView === "calendar" && (
+          <CalendarView 
+            columns={filteredColumns}
+            onEditCard={openEditModal}
+          />
+        )}
       </div>
 
       <CardModal 
@@ -252,21 +150,6 @@ export function BoardView() {
         cardId={modalData.cardId}
         columnId={modalData.columnId}
       />
-
-      {typeof document !== 'undefined' && createPortal(
-        <DragOverlay>
-          {activeCard ? <Card card={activeCard} /> : null}
-          {activeColumn ? (
-            <Column 
-              column={activeColumn} 
-              cards={activeColumn.cards} 
-              onEditCard={() => {}} 
-              onAddCard={() => {}} 
-            />
-          ) : null}
-        </DragOverlay>,
-        document.body
-      )}
-    </DndContext>
+    </div>
   );
 }

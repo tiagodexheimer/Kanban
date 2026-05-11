@@ -71,10 +71,10 @@ Foco em enriquecer a informação de cada tarefa.
 
 ### **Sprint 4: Multi-visualizações & Filtros (Semana 4)**
 Aumentar a versatilidade do workspace.
-- [ ] Visualização em **Lista** (compacta e rápida).
-- [ ] Visualização em **Calendário** para prazos.
-- [ ] Sistema de filtros por prioridade, tags e busca textual.
-- [ ] Ordenação personalizada (por data, prioridade, etc).
+- [x] Visualização em **Lista** (compacta e rápida).
+- [x] Visualização em **Calendário** para prazos.
+- [x] Sistema de filtros por prioridade, tags e busca textual.
+- [x] Ordenação personalizada (por data, prioridade, etc).
 
 ### **Sprint 5: Colaboração & Workspace (Semana 5)**
 Transformar em uma ferramenta multi-usuário.
