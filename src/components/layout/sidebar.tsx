@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { 
   Star,
   Search,
@@ -82,16 +83,29 @@ export function Sidebar() {
           </div>
         )}
 
-        <button 
-          onClick={() => signOut()}
-          className={cn(
-            "w-full flex items-center gap-3 p-2.5 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all",
-            isCollapsed ? "justify-center" : ""
-          )}
-        >
-          <LogOut size={20} />
-          {!isCollapsed && <span className="font-semibold">Sair</span>}
-        </button>
+        {session ? (
+          <button 
+            onClick={() => signOut({ callbackUrl: "/auth/signin" })}
+            className={cn(
+              "w-full flex items-center gap-3 p-2.5 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all",
+              isCollapsed ? "justify-center" : ""
+            )}
+          >
+            <LogOut size={20} />
+            {!isCollapsed && <span className="font-semibold">Sair</span>}
+          </button>
+        ) : (
+          <Link 
+            href="/auth/signin"
+            className={cn(
+              "w-full flex items-center gap-3 p-2.5 rounded-xl text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all",
+              isCollapsed ? "justify-center" : ""
+            )}
+          >
+            <UserIcon size={20} />
+            {!isCollapsed && <span className="font-semibold">Entrar</span>}
+          </Link>
+        )}
 
         <button className={cn(
           "w-full flex items-center gap-3 bg-primary p-2.5 rounded-xl text-primary-foreground hover:opacity-90 transition-all shadow-lg shadow-primary/20 active:scale-95",
