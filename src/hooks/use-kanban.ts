@@ -227,6 +227,8 @@ export function useUpdateCard() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["board"] });
+      queryClient.invalidateQueries({ queryKey: ["boards"] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
     },
   });
 }
@@ -243,15 +245,18 @@ export function useCreateCard() {
       priority?: string;
       dueDate?: string | null;
       tagIds?: string[];
+      assigneeIds?: string[];
     }) => {
       const res = await fetch("/api/cards", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["board"] });
+      queryClient.invalidateQueries({ queryKey: ["boards"] });
       toast.success("Tarefa criada com sucesso!");
     },
     onError: () => {

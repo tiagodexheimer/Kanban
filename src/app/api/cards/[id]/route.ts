@@ -22,6 +22,14 @@ export async function PATCH(
           set: assigneeIds.map((uid: string) => ({ id: uid }))
         } : undefined,
       },
+      include: {
+        tags: true,
+        assignees: true,
+        checklists: true,
+        comments: {
+          include: { user: true }
+        }
+      }
     });
 
     return NextResponse.json(card);

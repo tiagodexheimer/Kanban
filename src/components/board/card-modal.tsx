@@ -15,11 +15,12 @@ interface CardModalProps {
   onClose: () => void;
   columnId?: string;
   cardId?: string;
+  boardId?: string;
 }
 
-export function CardModal({ isOpen, onClose, columnId, cardId }: CardModalProps) {
+export function CardModal({ isOpen, onClose, columnId, cardId, boardId: propBoardId }: CardModalProps) {
   const { data: boards } = useBoards();
-  const boardId = boards?.[0]?.id;
+  const boardId = propBoardId || boards?.[0]?.id;
   const { data: board } = useBoard(boardId!);
   
   const isEditing = !!cardId;
@@ -38,6 +39,7 @@ export function CardModal({ isOpen, onClose, columnId, cardId }: CardModalProps)
           onClose={onClose} 
           boardTags={board?.tags || []}
           boardId={boardId}
+          projectId={board?.projectId}
         />
       )}
     </Modal>
@@ -50,9 +52,10 @@ interface CardFormProps {
   onClose: () => void;
   boardTags: Tag[];
   boardId?: string;
+  projectId?: string;
 }
 
-function CardForm({ card, columnId, onClose, boardTags, boardId }: CardFormProps) {
+function CardForm({ card, columnId, onClose, boardTags, boardId, projectId }: CardFormProps) {
   const updateCardMutation = useUpdateCard();
   const createCardMutation = useCreateCard();
   const deleteCardMutation = useDeleteCard();
@@ -68,10 +71,10 @@ function CardForm({ card, columnId, onClose, boardTags, boardId }: CardFormProps
     card?.tags.map(t => t.id) || []
   );
   const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>(
-    card?.assignees.map(a => a.id) || []
+    card?.assignees?.map(a => a.id) || []
   );
 
-  const project = projects?.find(p => p.id === board?.projectId);
+  const project = projects?.find(p => p.id === projectId);
   const projectMembers = project?.members || [];
 
   const handleSubmit = (e: React.FormEvent) => {

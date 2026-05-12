@@ -39,6 +39,13 @@ export function Card({ card, onClick }: CardProps) {
   const isOverdue = card.dueDate && new Date(card.dueDate) < new Date();
   const formattedDate = card.dueDate ? new Date(card.dueDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : null;
 
+  const priorityLabels: Record<string, string> = {
+    Low: "Baixa",
+    Medium: "Média",
+    High: "Alta",
+    Urgent: "Urgente",
+  };
+
   return (
     <div
       ref={setNodeRef}
@@ -55,7 +62,7 @@ export function Card({ card, onClick }: CardProps) {
         <div className="flex-1">
           <div className="flex flex-wrap items-center gap-1.5 mb-2">
             <span className={cn("text-[10px] font-bold uppercase px-2 py-0.5 rounded-full", priorityColors[card.priority])}>
-              {card.priority}
+              {priorityLabels[card.priority] || card.priority}
             </span>
             {card.tags?.map(tag => (
               <span 
@@ -97,8 +104,34 @@ export function Card({ card, onClick }: CardProps) {
           )}
         </div>
         
-        <div className="w-6 h-6 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-[10px] font-bold text-primary">
-          JD
+        <div className="flex -space-x-2">
+          {card.assignees?.map((assignee) => (
+            <div 
+              key={assignee.id}
+              className="w-7 h-7 rounded-full border-2 border-card bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary shrink-0 overflow-hidden"
+              title={assignee.name || ""}
+            >
+              {assignee.image ? (
+                <img src={assignee.image} alt={assignee.name || ""} className="w-full h-full object-cover" />
+              ) : (
+                <span>
+                  {assignee.name
+                    ? assignee.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .substring(0, 2)
+                        .toUpperCase()
+                    : "??"}
+                </span>
+              )}
+            </div>
+          ))}
+          {(!card.assignees || card.assignees.length === 0) && (
+            <div className="w-7 h-7 rounded-full border-2 border-card bg-accent flex items-center justify-center text-[10px] text-muted-foreground">
+              -
+            </div>
+          )}
         </div>
       </div>
     </div>

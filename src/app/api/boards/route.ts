@@ -27,6 +27,7 @@ export async function GET() {
             cards: {
               include: {
                 tags: true,
+                assignees: true,
               },
             },
           },

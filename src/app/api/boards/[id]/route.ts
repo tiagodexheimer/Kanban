@@ -28,6 +28,10 @@ export async function GET(
               orderBy: { position: "asc" },
               include: {
                 tags: true,
+                assignees: true,
+                comments: {
+                  include: { user: true }
+                },
                 checklists: {
                   orderBy: { position: "asc" },
                 },

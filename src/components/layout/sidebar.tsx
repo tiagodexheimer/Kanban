@@ -234,7 +234,16 @@ export function Sidebar() {
               {session.user.image ? (
                 <img src={session.user.image} alt={session.user.name || ""} className="w-full h-full rounded-lg object-cover" />
               ) : (
-                <UserIcon size={18} />
+                <span className="text-xs font-bold">
+                  {session.user.name
+                    ? session.user.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .substring(0, 2)
+                        .toUpperCase()
+                    : "??"}
+                </span>
               )}
             </div>
             {!isCollapsed && (

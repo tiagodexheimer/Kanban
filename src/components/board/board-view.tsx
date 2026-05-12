@@ -158,6 +158,7 @@ export function BoardView() {
         onClose={() => setIsModalOpen(false)}
         cardId={modalData.cardId}
         columnId={modalData.columnId}
+        boardId={boardId}
       />
     </div>
   );

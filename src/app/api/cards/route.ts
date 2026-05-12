@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { title, columnId, position, description, priority, dueDate, tagIds } = body;
+    const { title, columnId, position, description, priority, dueDate, tagIds, assigneeIds } = body;
 
     const card = await prisma.card.create({
       data: {
@@ -17,9 +17,13 @@ export async function POST(request: Request) {
         tags: tagIds ? {
           connect: tagIds.map((id: string) => ({ id }))
         } : undefined,
+        assignees: assigneeIds ? {
+          connect: assigneeIds.map((id: string) => ({ id }))
+        } : undefined,
       },
       include: {
         tags: true,
+        assignees: true,
         checklists: true,
       }
     });

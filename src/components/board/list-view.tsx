@@ -22,6 +22,13 @@ export function ListView({ columns, onEditCard }: ListViewProps) {
     Urgent: "bg-red-500/10 text-red-500 border-red-500/20",
   };
 
+  const priorityLabels: Record<string, string> = {
+    Low: "Baixa",
+    Medium: "Média",
+    High: "Alta",
+    Urgent: "Urgente",
+  };
+
   if (allCardsWithColumn.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-muted-foreground italic border-2 border-dashed border-border rounded-2xl">
@@ -71,7 +78,7 @@ export function ListView({ columns, onEditCard }: ListViewProps) {
                   "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border",
                   priorityColors[card.priority as keyof typeof priorityColors] || priorityColors.Medium
                 )}>
-                  {card.priority}
+                  {priorityLabels[card.priority] || card.priority}
                 </span>
               </td>
               <td className="px-6 py-4">
