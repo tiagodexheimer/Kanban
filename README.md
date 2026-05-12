@@ -88,7 +88,7 @@ Transformar em uma ferramenta multi-usuário.
 Inspirado na inteligência do ClickUp.
 - [ ] Automações simples (ex: "Mover para Done ao concluir checklist").
 - [ ] Dashboard com gráficos de Burn-down e produtividade.
-- [ ] Dark/Light mode toggle avançado com temas customizáveis.
+- [x] Dark/Light mode toggle avançado com temas customizáveis.
 
 ---
 

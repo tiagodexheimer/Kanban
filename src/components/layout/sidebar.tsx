@@ -20,6 +20,7 @@ import { useBoards, useCreateBoard, useProjects, useCreateProject, useInviteToPr
 import { useViewStore } from "@/store/use-view-store";
 import { toast } from "sonner";
 import { Folder, ChevronDown, Users, UserPlus } from "lucide-react";
+import { ThemeToggle } from "./theme-toggle";
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -85,12 +86,15 @@ export function Sidebar() {
     >
       <div className="p-4 flex items-center justify-between border-b border-border">
         {!isCollapsed && <span className="font-bold text-xl bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">Kanban</span>}
-        <button 
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-1.5 rounded-md hover:bg-accent text-muted-foreground transition-colors"
-        >
-          {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-        </button>
+        <div className="flex items-center gap-1">
+          {!isCollapsed && <ThemeToggle />}
+          <button 
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="p-1.5 rounded-md hover:bg-accent text-muted-foreground transition-colors"
+          >
+            {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto py-4 space-y-6 px-3">
