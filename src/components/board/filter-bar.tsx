@@ -22,6 +22,12 @@ export function FilterBar({ tags }: FilterBarProps) {
   } = useViewStore();
 
   const priorities = ["Low", "Medium", "High", "Urgent"];
+  const priorityLabels: Record<string, string> = {
+    Low: "Baixa",
+    Medium: "Média",
+    High: "Alta",
+    Urgent: "Urgente",
+  };
 
   const hasActiveFilters = filters.search !== "" || filters.priorities.length > 0 || filters.tags.length > 0;
 
@@ -107,7 +113,7 @@ export function FilterBar({ tags }: FilterBarProps) {
                   : "bg-background border-border text-muted-foreground hover:border-muted-foreground"
               )}
             >
-              {priority}
+              {priorityLabels[priority] || priority}
             </button>
           ))}
         </div>

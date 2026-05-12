@@ -280,7 +280,7 @@ export function Sidebar() {
         )}
 
         <button 
-          onClick={handleCreateBoard}
+          onClick={() => handleCreateBoard()}
           className={cn(
             "w-full flex items-center gap-3 bg-primary p-2.5 rounded-xl text-primary-foreground hover:opacity-90 transition-all shadow-lg shadow-primary/20 active:scale-95",
             isCollapsed ? "justify-center px-0" : ""

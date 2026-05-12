@@ -7,6 +7,7 @@ import {
   useUpdateCard, 
   useCreateColumn,
   useUpdateColumn,
+  useCreateBoard,
   Column as ColumnType,
   Card as CardType
 } from "@/hooks/use-kanban";
@@ -26,6 +27,7 @@ export function BoardView() {
   const updateCardMutation = useUpdateCard();
   const createColumnMutation = useCreateColumn();
   const updateColumnMutation = useUpdateColumn();
+  const createBoardMutation = useCreateBoard();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalData, setModalData] = useState<{ cardId?: string; columnId?: string }>({});
@@ -85,13 +87,14 @@ export function BoardView() {
     const handleCreateFirstBoard = async () => {
       const title = prompt("Título do seu novo quadro:");
       if (title) {
-        const res = await fetch("/api/boards", {
-          method: "POST",
-          body: JSON.stringify({ title, description: "Meu novo workspace" }),
+        createBoardMutation.mutate({ 
+          title, 
+          description: "Meu novo workspace" 
+        }, {
+          onSuccess: () => {
+            window.location.reload();
+          }
         });
-        if (res.ok) {
-          window.location.reload();
-        }
       }
     };
 
