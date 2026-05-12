@@ -36,7 +36,7 @@ export interface Card {
   id: string;
   title: string;
   description?: string;
-  priority: string;
+  priority: "Low" | "Medium" | "High" | "Urgent";
   tags: Tag[];
   assignees: User[];
   checklists: ChecklistItem[];
@@ -44,6 +44,8 @@ export interface Card {
   position: number;
   columnId: string;
   dueDate?: string | Date | null;
+  customFieldValues?: CustomFieldValue[];
+  createdAt: string;
 }
 
 export interface Column {
@@ -51,6 +53,8 @@ export interface Column {
   title: string;
   position: number;
   cards: Card[];
+  color?: string;
+  type: "TODO" | "IN_PROGRESS" | "DONE";
 }
 
 export interface Board {
@@ -60,6 +64,8 @@ export interface Board {
   columns: Column[];
   tags: Tag[];
   projectId?: string;
+  folderId?: string;
+  customFields?: CustomField[];
 }
 
 export interface Project {
@@ -70,6 +76,28 @@ export interface Project {
   owner: User;
   members: User[];
   boards: Board[];
+  folders: Folder[];
+}
+
+export interface Folder {
+  id: string;
+  title: string;
+  projectId: string;
+  boards: Board[];
+}
+
+export interface CustomField {
+  id: string;
+  name: string;
+  type: string;
+  options?: string;
+}
+
+export interface CustomFieldValue {
+  id: string;
+  value: string | null;
+  customFieldId: string;
+  cardId: string;
 }
 
 export interface Activity {
@@ -166,7 +194,7 @@ export function useInviteToProject() {
 export function useCreateBoard() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { title: string; description?: string; projectId?: string }) => {
+    mutationFn: async (data: { title: string; description?: string; projectId?: string; folderId?: string }) => {
       const res = await fetch("/api/boards", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -561,5 +589,62 @@ export function useBoardStats(boardId: string) {
       return res.json();
     },
     enabled: !!boardId,
+  });
+}
+
+export function useFolders(projectId: string) {
+  return useQuery<Folder[]>({
+    queryKey: ["folders", projectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/folders?projectId=${projectId}`);
+      if (!res.ok) throw new Error("Failed to fetch folders");
+      return res.json();
+    },
+    enabled: !!projectId,
+  });
+}
+
+export function useCreateFolder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { title: string; projectId: string }) => {
+      const res = await fetch("/api/folders", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+      return res.json();
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["folders", variables.projectId] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+    },
+  });
+}
+
+export function useCustomFields(boardId: string) {
+  return useQuery<CustomField[]>({
+    queryKey: ["custom-fields", boardId],
+    queryFn: async () => {
+      const res = await fetch(`/api/boards/${boardId}/fields`);
+      if (!res.ok) throw new Error("Failed to fetch custom fields");
+      return res.json();
+    },
+    enabled: !!boardId,
+  });
+}
+
+export function useUpdateCustomValue(cardId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { customFieldId: string; value: string }) => {
+      const res = await fetch(`/api/cards/${cardId}/values`, {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["board"] });
+    },
   });
 }

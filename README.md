@@ -86,9 +86,33 @@ Transformar em uma ferramenta multi-usuário.
 
 ### **Sprint 6: Automações & Dashboards (Semana 6)**
 Inspirado na inteligência do ClickUp.
-- [ ] Automações simples (ex: "Mover para Done ao concluir checklist").
-- [ ] Dashboard com gráficos de Burn-down e produtividade.
+- [x] Dashboard com gráficos de Burn-down e produtividade.
 - [x] Dark/Light mode toggle avançado com temas customizáveis.
+
+### **Sprint 7: Flexibilidade & Estrutura (Semana 7)**
+- [ ] **Campos Customizados**: Adição de campos de texto, números ou dropdowns específicos por quadro. Permitir que o usuário adicione campos de texto, números, dinheiro ou dropdowns específicos para cada quadro.
+- [ ] **Hierarquia de Pastas**: O Criar uma camada acima dos quadros (Espaços -> Pastas -> Quadros), permitindo organizar múltiplos projetos. 
+- [x] **Status Personalizados**: Definição de colunas e cores de status por quadro. Cada quadro pode ter seus próprios nomes de colunas e cores de status (ex: "Em Revisão", "Aguardando Cliente").
+
+### **Sprint 8: Relacionamentos & Dependências (Semana 8)**
+- [ ] **Dependências de Tarefas**: Sistema de bloqueios ("Bloqueado por" / "Esperando por"). Marcar uma tarefa como "Bloqueada por" ou "Esperando por" outra tarefa.
+- [ ] **Relacionamentos entre Cards**: Lincar tarefas de quadros diferentes. Lincar cards de quadros diferentes (ex: um bug lincado a uma tarefa de desenvolvimento). 
+- [ ] **Subtarefas Aninhadas**: Suporte a subtarefas em múltiplos níveis. ermitir que subtarefas também tenham suas próprias subtarefas (recursividade).
+
+### **Sprint 9: Docs & Conhecimento (Semana 9)**
+- [ ] **ClickUp Docs**: Editor de texto rico (Rich Text) para documentação interna.Um editor Rich Text (Slash commands, markdown) integrado para criar wikis e documentação de processos dentro do workspace.
+- [ ] **Whiteboards (Quadros Brancos)**: Uma área para desenho livre e diagramas (usando algo como Excalidraw ou Canvas API).
+- [ ] **Menções Globais**: Uso de `@` para referenciar membros ou tarefas em comentários. Permitir que subtarefas também tenham suas próprias subtarefas (recursividade).
+
+### **Sprint 10: IA & Automações Avançadas (Semana 10)**
+- [ ] **IA de Resumo**: Uso de IA para resumir comentários e gerar descrições. Integrar uma API de LLM (como Gemini ou OpenAI) para resumir longas threads de comentários ou gerar descrições de tarefas automaticamente.
+- [ ] **Gatilhos de Tempo**: Automações baseadas em prazos e atrasos. Automações que disparam por data (ex: "Se a tarefa estiver atrasada, envie um alerta para o responsável").
+- [ ] **Webhooks & Integrações**: Enviar notificações para Slack/Discord ou criar tarefas via e-mail.
+
+### **Sprint 11: Gestão de Tempo & Recursos (Semana 11)**
+- [ ] **Time Tracking**: Cronômetro integrado para registro de tempo por tarefa. Botão de "Play/Pause" dentro do card para registrar o tempo gasto na tarefa.
+- [ ] **Carga de Trabalho**: Visualização da distribuição de tarefas entre membros. Um gráfico que mostra quantas tarefas cada membro da equipe tem atribuídas para evitar sobrecarga.
+- [ ] **Exportação de Relatórios**: Gerar PDFs ou CSVs com o tempo gasto e tarefas concluídas no período.
 
 ---
 

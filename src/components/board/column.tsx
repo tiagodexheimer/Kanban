@@ -5,7 +5,8 @@ import { useSortable, SortableContext, verticalListSortingStrategy } from "@dnd-
 import { CSS } from "@dnd-kit/utilities";
 import { Column as ColumnType, Card as CardType, useUpdateColumn, useDeleteColumn } from "@/hooks/use-kanban";
 import { Card } from "./card";
-import { Plus, MoreHorizontal, Check, X, GripVertical, Trash2 } from "lucide-react";
+import { Plus, MoreHorizontal, Check, X, GripVertical, Trash2, Palette, Circle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ColumnProps {
   column: ColumnType;
@@ -17,6 +18,7 @@ interface ColumnProps {
 export function Column({ column, cards, onEditCard, onAddCard }: ColumnProps) {
   const [isEditingTitle, setIsEditingTitle] = React.useState(false);
   const [editedTitle, setEditedTitle] = React.useState(column.title);
+  const [isColorMenuOpen, setIsColorMenuOpen] = React.useState(false);
   const updateColumnMutation = useUpdateColumn();
   const deleteColumnMutation = useDeleteColumn();
 
@@ -25,6 +27,14 @@ export function Column({ column, cards, onEditCard, onAddCard }: ColumnProps) {
       updateColumnMutation.mutate({ id: column.id, title: editedTitle });
     }
     setIsEditingTitle(false);
+  };
+
+  const handleColorChange = (color: string) => {
+    updateColumnMutation.mutate({ id: column.id, color });
+  };
+
+  const handleTypeChange = (type: string) => {
+    updateColumnMutation.mutate({ id: column.id, type: type as any });
   };
 
   const handleDeleteColumn = () => {
@@ -92,6 +102,10 @@ export function Column({ column, cards, onEditCard, onAddCard }: ColumnProps) {
               className="flex items-center gap-2 cursor-pointer group/title overflow-hidden"
               onClick={() => setIsEditingTitle(true)}
             >
+              <div 
+                className="w-3 h-3 rounded-full shrink-0" 
+                style={{ backgroundColor: column.color || "var(--primary)" }}
+              />
               <h3 className="font-bold text-foreground group-hover/title:text-primary transition-colors truncate">
                 {column.title}
               </h3>
@@ -102,6 +116,44 @@ export function Column({ column, cards, onEditCard, onAddCard }: ColumnProps) {
           )}
         </div>
         <div className="flex items-center gap-1">
+          <div className="relative">
+            <button 
+              onClick={() => setIsColorMenuOpen(!isColorMenuOpen)}
+              className={cn(
+                "p-1.5 rounded-md text-muted-foreground transition-colors",
+                isColorMenuOpen ? "bg-accent text-primary" : "hover:bg-accent"
+              )}
+              title="Mudar cor da lista"
+            >
+              <Palette size={18} />
+            </button>
+            {isColorMenuOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={() => setIsColorMenuOpen(false)}
+                />
+                <div className="absolute right-0 top-full mt-2 bg-popover border border-border rounded-xl p-3 shadow-2xl z-50 grid grid-cols-4 gap-2 w-40 animate-in fade-in zoom-in duration-200">
+                  <p className="col-span-4 text-[10px] font-bold text-muted-foreground uppercase mb-1">Cores</p>
+                  {["#7c3aed", "#ef4444", "#22c55e", "#3b82f6", "#eab308", "#ec4899", "#f97316", "#64748b"].map(c => (
+                    <button 
+                      key={c}
+                      onClick={() => {
+                        handleColorChange(c);
+                        setIsColorMenuOpen(false);
+                      }}
+                      className={cn(
+                        "w-7 h-7 rounded-full hover:scale-110 transition-all border-2",
+                        column.color === c ? "border-foreground scale-110" : "border-transparent"
+                      )}
+                      style={{ backgroundColor: c }}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+          
           <button 
             onClick={handleDeleteColumn}
             className="p-1.5 hover:bg-destructive/10 rounded-md text-muted-foreground hover:text-destructive transition-colors"
@@ -119,7 +171,10 @@ export function Column({ column, cards, onEditCard, onAddCard }: ColumnProps) {
         </div>
       </div>
 
-      <div className="flex-1 bg-accent/20 rounded-2xl p-3 border border-transparent hover:border-border transition-colors">
+      <div 
+        className="flex-1 bg-accent/20 rounded-2xl p-3 border-t-4 transition-all"
+        style={{ borderTopColor: column.color || "var(--primary)" }}
+      >
         <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
           {cards.map(card => (
             <Card key={card.id} card={card} onClick={() => onEditCard(card.id)} />

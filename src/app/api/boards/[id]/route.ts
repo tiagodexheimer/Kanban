@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import prisma from "@/lib/prisma"; // Updated for Sprint 7
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -21,6 +21,7 @@ export async function GET(
       where: { id },
       include: {
         tags: true,
+        customFields: true,
         columns: {
           orderBy: { position: "asc" },
           include: {
@@ -29,6 +30,7 @@ export async function GET(
               include: {
                 tags: true,
                 assignees: true,
+                customFieldValues: true,
                 comments: {
                   include: { user: true }
                 },
@@ -39,7 +41,7 @@ export async function GET(
             },
           },
         },
-        members: true, // Need to check members
+        members: true,
       },
     });
 

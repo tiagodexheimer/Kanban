@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { title, description, projectId } = body;
+    const { title, description, projectId, folderId } = body;
 
     if (!title) {
       return NextResponse.json({ error: "Título é obrigatório" }, { status: 400 });
@@ -66,6 +66,7 @@ export async function POST(request: Request) {
         description,
         ownerId: userId,
         projectId: projectId || null,
+        folderId: folderId || null,
         columns: {
           create: [
             { title: "To Do", position: 1 },

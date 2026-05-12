@@ -74,6 +74,7 @@ model Project {
   members     User[]   @relation("ProjectMembers")
   
   boards      Board[]
+  folders     Folder[]
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -92,12 +93,49 @@ model Board {
   projectId   String?
   project     Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
   
+  folderId    String?
+  folder      Folder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  
   columns     Column[]
   tags        Tag[]
+  customFields CustomField[]
   activities  Activity[]
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Folder {
+  id          String   @id @default(uuid())
+  title       String
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  boards      Board[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model CustomField {
+  id          String   @id @default(uuid())
+  name        String
+  type        String   // TEXT, NUMBER, DATE, DROPDOWN, CURRENCY
+  options     String?  // JSON string for DROPDOWN options
+  boardId     String
+  board       Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  values      CustomFieldValue[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model CustomFieldValue {
+  id            String      @id @default(uuid())
+  value         String?     // Stored as string
+  cardId        String
+  card          Card        @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  customFieldId String
+  customField   CustomField @relation(fields: [customFieldId], references: [id], onDelete: Cascade)
+  
+  @@unique([cardId, customFieldId])
 }
 
 model Column {
@@ -107,6 +145,10 @@ model Column {
   boardId   String
   board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
   cards     Card[]
+  
+  color     String?   // Custom status color
+  type      String    @default("IN_PROGRESS") // TODO, IN_PROGRESS, DONE
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -129,6 +171,7 @@ model Card {
   checklists  ChecklistItem[]
   comments    Comment[]
   activities  Activity[]
+  customFieldValues CustomFieldValue[]
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

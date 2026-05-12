@@ -20,7 +20,8 @@ import { CalendarView } from "./calendar-view";
 import { CardModal } from "./card-modal";
 import { DashboardView } from "./dashboard-view";
 import { ActivityLog } from "./activity-log";
-import { History, X } from "lucide-react";
+import { BoardSettingsModal } from "./board-settings-modal";
+import { History, X, Settings } from "lucide-react";
 
 export function BoardView() {
   const { data: boards, isLoading: isLoadingBoards } = useBoards();
@@ -35,6 +36,7 @@ export function BoardView() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isActivityLogOpen, setIsActivityLogOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [modalData, setModalData] = useState<{ cardId?: string; columnId?: string }>({});
 
   const handleAddColumn = () => {
@@ -140,6 +142,14 @@ export function BoardView() {
             <History size={18} />
             <span className="text-sm font-medium">Histórico</span>
           </button>
+          <button 
+            onClick={() => setIsSettingsOpen(true)}
+            className="p-2 rounded-xl border border-border bg-background text-muted-foreground hover:bg-accent transition-all flex items-center gap-2"
+            title="Configurações do quadro"
+          >
+            <Settings size={18} />
+            <span className="text-sm font-medium">Configurações</span>
+          </button>
         </div>
       </header>
 
@@ -162,6 +172,7 @@ export function BoardView() {
           <ListView 
             columns={filteredColumns}
             onEditCard={openEditModal}
+            customFields={board.customFields || []}
           />
         )}
 
@@ -205,6 +216,14 @@ export function BoardView() {
         columnId={modalData.columnId}
         boardId={boardId}
       />
+
+      {boardId && (
+        <BoardSettingsModal 
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+          boardId={boardId}
+        />
+      )}
     </div>
   );
 }

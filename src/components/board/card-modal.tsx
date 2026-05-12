@@ -8,6 +8,7 @@ import { TagSelector } from "./tag-selector";
 import { AssigneeSelector } from "./assignee-selector";
 import { CommentSection } from "./comment-section";
 import { ActivityLog } from "./activity-log";
+import { CustomFieldsEditor } from "./custom-fields-editor";
 import { Calendar, Users, History } from "lucide-react";
 import { useProjects } from "@/hooks/use-kanban";
 
@@ -41,6 +42,7 @@ export function CardModal({ isOpen, onClose, columnId, cardId, boardId: propBoar
           boardTags={board?.tags || []}
           boardId={boardId}
           projectId={board?.projectId}
+          board={board}
         />
       )}
     </Modal>
@@ -54,9 +56,10 @@ interface CardFormProps {
   boardTags: Tag[];
   boardId?: string;
   projectId?: string;
+  board?: any;
 }
 
-function CardForm({ card, columnId, onClose, boardTags, boardId, projectId }: CardFormProps) {
+function CardForm({ card, columnId, onClose, boardTags, boardId, projectId, board }: CardFormProps) {
   const updateCardMutation = useUpdateCard();
   const createCardMutation = useCreateCard();
   const deleteCardMutation = useDeleteCard();
@@ -138,7 +141,7 @@ function CardForm({ card, columnId, onClose, boardTags, boardId, projectId }: Ca
             <label className="block text-xs font-bold text-muted-foreground uppercase mb-1.5 ml-1">Prioridade</label>
             <select 
               value={priority}
-              onChange={(e) => setPriority(e.target.value)}
+              onChange={(e) => setPriority(e.target.value as any)}
               className="w-full bg-accent/30 border border-border/50 rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="Low">Baixa</option>
@@ -186,6 +189,14 @@ function CardForm({ card, columnId, onClose, boardTags, boardId, projectId }: Ca
             availableTags={boardTags}
             selectedTagIds={selectedTagIds}
             onChange={setSelectedTagIds}
+          />
+        )}
+
+        {card && board?.customFields && (
+          <CustomFieldsEditor 
+            cardId={card.id}
+            fields={board.customFields}
+            values={card.customFieldValues || []}
           />
         )}
 

@@ -1,16 +1,17 @@
 "use client";
 
 import React from "react";
-import { Card, Column } from "@/hooks/use-kanban";
-import { Calendar, Tag as TagIcon, MoreHorizontal, CheckCircle2 } from "lucide-react";
+import { Card, Column, CustomField } from "@/hooks/use-kanban";
+import { Calendar, Tag as TagIcon, MoreHorizontal, CheckCircle2, Hash, Type, DollarSign, List } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ListViewProps {
   columns: Column[];
   onEditCard: (cardId: string, columnId: string) => void;
+  customFields?: CustomField[];
 }
 
-export function ListView({ columns, onEditCard }: ListViewProps) {
+export function ListView({ columns, onEditCard, customFields = [] }: ListViewProps) {
   const allCardsWithColumn = columns.flatMap(col => 
     col.cards.map(card => ({ ...card, columnName: col.title }))
   );
@@ -44,6 +45,17 @@ export function ListView({ columns, onEditCard }: ListViewProps) {
           <tr className="bg-muted/50 border-bottom border-border">
             <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-widest w-1/3">Tarefa</th>
             <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-widest">Lista</th>
+            
+            {/* Custom Fields Headers */}
+            {customFields.slice(0, 3).map(field => (
+              <th key={field.id} className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                <div className="flex items-center gap-1.5">
+                  {getFieldIcon(field.type)}
+                  {field.name}
+                </div>
+              </th>
+            ))}
+
             <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-widest">Prioridade</th>
             <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-widest">Data</th>
             <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-widest">Etiquetas</th>
@@ -73,6 +85,18 @@ export function ListView({ columns, onEditCard }: ListViewProps) {
                   {card.columnName}
                 </span>
               </td>
+              
+              {/* Custom Fields Values */}
+              {customFields.slice(0, 3).map(field => {
+                const value = card.customFieldValues?.find(v => v.customFieldId === field.id)?.value;
+                return (
+                  <td key={field.id} className="px-6 py-4">
+                    <span className="text-xs text-muted-foreground truncate max-w-[120px] block">
+                      {value || <span className="opacity-30 italic">--</span>}
+                    </span>
+                  </td>
+                );
+              })}
               <td className="px-6 py-4">
                 <span className={cn(
                   "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border",
@@ -116,4 +140,16 @@ export function ListView({ columns, onEditCard }: ListViewProps) {
       </table>
     </div>
   );
+}
+
+function getFieldIcon(type: string) {
+  const props = { size: 12, className: "text-muted-foreground" };
+  switch (type) {
+    case "NUMBER": return <Hash {...props} />;
+    case "TEXT": return <Type {...props} />;
+    case "DATE": return <Calendar {...props} />;
+    case "CURRENCY": return <DollarSign {...props} />;
+    case "DROPDOWN": return <List {...props} />;
+    default: return <Type {...props} />;
+  }
 }

@@ -16,10 +16,10 @@ import {
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
-import { useBoards, useCreateBoard, useProjects, useCreateProject, useInviteToProject } from "@/hooks/use-kanban";
+import { useBoards, useCreateBoard, useProjects, useCreateProject, useInviteToProject, useCreateFolder } from "@/hooks/use-kanban";
 import { useViewStore } from "@/store/use-view-store";
 import { toast } from "sonner";
-import { Folder, ChevronDown, Users, UserPlus } from "lucide-react";
+import { Folder, ChevronDown, Users, UserPlus, FolderPlus } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 
 export function Sidebar() {
@@ -29,13 +29,21 @@ export function Sidebar() {
   const { data: projects, isLoading: isLoadingProjects } = useProjects();
   const createBoardMutation = useCreateBoard();
   const createProjectMutation = useCreateProject();
+  const createFolderMutation = useCreateFolder();
   const inviteMutation = useInviteToProject();
   const { activeBoardId, setActiveBoardId } = useViewStore();
   const [expandedProjects, setExpandedProjects] = useState<string[]>([]);
+  const [expandedFolders, setExpandedFolders] = useState<string[]>([]);
 
   const toggleProject = (projectId: string) => {
     setExpandedProjects(prev => 
       prev.includes(projectId) ? prev.filter(id => id !== projectId) : [...prev, projectId]
+    );
+  };
+
+  const toggleFolder = (folderId: string) => {
+    setExpandedFolders(prev => 
+      prev.includes(folderId) ? prev.filter(id => id !== folderId) : [...prev, folderId]
     );
   };
 
@@ -46,18 +54,29 @@ export function Sidebar() {
     { icon: Settings, label: "Configurações" },
   ];
 
-  const handleCreateBoard = async (projectId?: string) => {
+  const handleCreateBoard = async (projectId?: string, folderId?: string) => {
     const title = prompt("Título do novo quadro:");
     if (!title) return;
 
     createBoardMutation.mutate({ 
       title, 
       description: "Novo quadro criado",
-      projectId
+      projectId,
+      folderId
     }, {
       onSuccess: (data) => {
         setActiveBoardId(data.id);
       }
+    });
+  };
+
+  const handleCreateFolder = async (projectId: string) => {
+    const title = prompt("Título da nova pasta:");
+    if (!title) return;
+
+    createFolderMutation.mutate({ 
+      title, 
+      projectId 
     });
   };
 
@@ -151,6 +170,13 @@ export function Sidebar() {
                             <UserPlus size={12} />
                           </button>
                           <button 
+                            onClick={(e) => { e.stopPropagation(); handleCreateFolder(project.id); }}
+                            className="p-1 hover:bg-primary/20 rounded text-primary"
+                            title="Nova pasta"
+                          >
+                            <FolderPlus size={12} />
+                          </button>
+                          <button 
                             onClick={(e) => { e.stopPropagation(); handleCreateBoard(project.id); }}
                             className="p-1 hover:bg-primary/20 rounded text-primary"
                             title="Novo quadro"
@@ -162,25 +188,74 @@ export function Sidebar() {
                       </div>
                     )}
                   </div>
-
+ 
                   {expandedProjects.includes(project.id) && !isCollapsed && (
                     <div className="ml-4 pl-2 border-l border-border space-y-1 mt-1 animate-in slide-in-from-top-1 duration-200">
-                      {project.boards.map((board) => (
+                      {/* Folders in Project */}
+                      {project.folders?.map((folder) => (
+                        <div key={folder.id} className="space-y-1">
+                          <div 
+                            className={cn(
+                              "group flex items-center gap-2 p-1.5 rounded-lg cursor-pointer hover:bg-accent transition-all",
+                              expandedFolders.includes(folder.id) ? "bg-accent/30" : ""
+                            )}
+                            onClick={() => toggleFolder(folder.id)}
+                          >
+                            <Folder size={16} className="text-muted-foreground" />
+                            <span className="flex-1 text-xs font-medium truncate">{folder.title}</span>
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100">
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); handleCreateBoard(project.id, folder.id); }}
+                                className="p-0.5 hover:bg-primary/20 rounded text-primary"
+                              >
+                                <Plus size={10} />
+                              </button>
+                              <ChevronDown size={12} className={cn("transition-transform", expandedFolders.includes(folder.id) ? "rotate-180" : "")} />
+                            </div>
+                          </div>
+                          
+                          {expandedFolders.includes(folder.id) && (
+                            <div className="ml-4 pl-2 border-l border-border/50 space-y-1">
+                              {folder.boards?.map((board) => (
+                                <button
+                                  key={board.id}
+                                  onClick={() => setActiveBoardId(board.id)}
+                                  className={cn(
+                                    "w-full flex items-center gap-3 p-1.5 rounded-lg text-[13px] transition-all",
+                                    activeBoardId === board.id 
+                                      ? "bg-primary/10 text-primary font-medium" 
+                                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                                  )}
+                                >
+                                  <LayoutDashboard size={12} />
+                                  <span className="truncate">{board.title}</span>
+                                </button>
+                              ))}
+                              {(folder.boards?.length || 0) === 0 && (
+                                <div className="px-2 py-1 text-[10px] text-muted-foreground italic">Vazio</div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+
+                      {/* Direct Boards in Project */}
+                      {project.boards?.filter(b => !b.folderId).map((board) => (
                         <button
                           key={board.id}
                           onClick={() => setActiveBoardId(board.id)}
                           className={cn(
-                            "w-full flex items-center gap-3 p-1.5 rounded-lg text-sm transition-all",
+                            "w-full flex items-center gap-3 p-1.5 rounded-lg text-[13px] transition-all",
                             activeBoardId === board.id 
                               ? "bg-primary/10 text-primary font-medium" 
                               : "text-muted-foreground hover:bg-accent hover:text-foreground"
                           )}
                         >
-                          <LayoutDashboard size={14} />
+                          <LayoutDashboard size={12} />
                           <span className="truncate">{board.title}</span>
                         </button>
                       ))}
-                      {project.boards.length === 0 && (
+                      {(project.boards?.length || 0) === 0 && (project.folders?.length || 0) === 0 && (
                         <div className="px-2 py-1 text-[10px] text-muted-foreground italic">Nenhum quadro</div>
                       )}
                     </div>
