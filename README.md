@@ -80,9 +80,9 @@ Aumentar a versatilidade do workspace.
 Transformar em uma ferramenta multi-usuário.
 - [x] Autenticação com NextAuth (Google, GitHub, E-mail).
 - [x] Gestão de múltiplos quadros (Workspace Switcher).
-- [X] Atribuição de tarefas para diferentes membros da equipe.
-- [X] Comentários em tempo real dentro dos cards.
-- [ ] Histórico de atividades (Activity Log).
+- [x] Atribuição de tarefas para diferentes membros da equipe.
+- [x] Comentários em tempo real dentro dos cards.
+- [x] Histórico de atividades (Activity Log).
 
 ### **Sprint 6: Automações & Dashboards (Semana 6)**
 Inspirado na inteligência do ClickUp.

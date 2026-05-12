@@ -7,7 +7,8 @@ import { ChecklistEditor } from "./checklist-editor";
 import { TagSelector } from "./tag-selector";
 import { AssigneeSelector } from "./assignee-selector";
 import { CommentSection } from "./comment-section";
-import { Calendar, Users } from "lucide-react";
+import { ActivityLog } from "./activity-log";
+import { Calendar, Users, History } from "lucide-react";
 import { useProjects } from "@/hooks/use-kanban";
 
 interface CardModalProps {
@@ -197,6 +198,12 @@ function CardForm({ card, columnId, onClose, boardTags, boardId, projectId }: Ca
         {card && (
           <div className="pt-4 border-t border-border/50">
             <CommentSection cardId={card.id} />
+          </div>
+        )}
+
+        {card && (
+          <div className="pt-4 border-t border-border/50">
+            <ActivityLog cardId={card.id} title="Histórico da Tarefa" />
           </div>
         )}
 

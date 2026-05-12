@@ -72,6 +72,18 @@ export interface Project {
   boards: Board[];
 }
 
+export interface Activity {
+  id: string;
+  type: string;
+  description: string;
+  userId: string;
+  user: User;
+  boardId: string;
+  cardId?: string;
+  card?: { id: string; title: string };
+  createdAt: string;
+}
+
 export function useBoards() {
   return useQuery<Board[]>({
     queryKey: ["boards"],
@@ -229,6 +241,8 @@ export function useUpdateCard() {
       queryClient.invalidateQueries({ queryKey: ["board"] });
       queryClient.invalidateQueries({ queryKey: ["boards"] });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["activities"] });
+      queryClient.invalidateQueries({ queryKey: ["card-activities"] });
     },
   });
 }
@@ -498,5 +512,29 @@ export function useCreateComment() {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["comments", variables.cardId] });
     }
+  });
+}
+// Activity Hooks
+export function useActivities(boardId: string) {
+  return useQuery<Activity[]>({
+    queryKey: ["activities", boardId],
+    queryFn: async () => {
+      const res = await fetch(`/api/boards/${boardId}/activities`);
+      if (!res.ok) throw new Error("Failed to fetch activities");
+      return res.json();
+    },
+    enabled: !!boardId,
+  });
+}
+
+export function useCardActivities(cardId: string) {
+  return useQuery<Activity[]>({
+    queryKey: ["card-activities", cardId],
+    queryFn: async () => {
+      const res = await fetch(`/api/cards/${cardId}/activities`);
+      if (!res.ok) throw new Error("Failed to fetch card activities");
+      return res.json();
+    },
+    enabled: !!cardId,
   });
 }

@@ -12,11 +12,14 @@ import {
   Card as CardType
 } from "@/hooks/use-kanban";
 import { useViewStore } from "@/store/use-view-store";
+import { cn } from "@/lib/utils";
 import { FilterBar } from "./filter-bar";
 import { KanbanBoard } from "./kanban-board";
 import { ListView } from "./list-view";
 import { CalendarView } from "./calendar-view";
 import { CardModal } from "./card-modal";
+import { ActivityLog } from "./activity-log";
+import { History, X } from "lucide-react";
 
 export function BoardView() {
   const { data: boards, isLoading: isLoadingBoards } = useBoards();
@@ -30,6 +33,7 @@ export function BoardView() {
   const createBoardMutation = useCreateBoard();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isActivityLogOpen, setIsActivityLogOpen] = useState(false);
   const [modalData, setModalData] = useState<{ cardId?: string; columnId?: string }>({});
 
   const handleAddColumn = () => {
@@ -122,7 +126,19 @@ export function BoardView() {
           <p className="text-muted-foreground">{board.description || "Visualize e organize suas tarefas."}</p>
         </div>
         <div className="flex items-center gap-4">
-          {/* Espaço para filtros ou perfil */}
+          <button 
+            onClick={() => setIsActivityLogOpen(!isActivityLogOpen)}
+            className={cn(
+              "p-2 rounded-xl border transition-all flex items-center gap-2",
+              isActivityLogOpen 
+                ? "bg-primary/10 border-primary text-primary" 
+                : "bg-background border-border text-muted-foreground hover:bg-accent"
+            )}
+            title="Histórico de atividades"
+          >
+            <History size={18} />
+            <span className="text-sm font-medium">Histórico</span>
+          </button>
         </div>
       </header>
 
@@ -155,6 +171,27 @@ export function BoardView() {
           />
         )}
       </div>
+
+      {/* Activity Log Side Panel */}
+      {isActivityLogOpen && (
+        <div className="fixed inset-y-0 right-0 w-80 bg-background border-l border-border shadow-2xl z-50 animate-in slide-in-from-right duration-300">
+          <div className="p-4 border-b border-border flex items-center justify-between">
+            <h2 className="font-bold flex items-center gap-2">
+              <History size={18} />
+              Atividade do Quadro
+            </h2>
+            <button 
+              onClick={() => setIsActivityLogOpen(false)}
+              className="p-1 rounded-lg hover:bg-accent transition-colors"
+            >
+              <X size={20} />
+            </button>
+          </div>
+          <div className="p-4 overflow-y-auto h-[calc(100vh-64px)]">
+            <ActivityLog boardId={boardId} maxHeight="calc(100vh - 120px)" />
+          </div>
+        </div>
+      )}
 
       <CardModal 
         isOpen={isModalOpen}

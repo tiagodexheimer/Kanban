@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { logActivity } from "@/lib/activity-log";
 
 export async function GET(
   request: Request,
@@ -62,6 +63,22 @@ export async function POST(
         }
       }
     });
+    
+    // Log Activity
+    const card = await prisma.card.findUnique({
+      where: { id: cardId },
+      include: { column: true }
+    });
+    
+    if (card) {
+      await logActivity({
+        type: "ADD_COMMENT",
+        description: `comentou na tarefa "${card.title}"`,
+        userId,
+        boardId: card.column.boardId,
+        cardId: card.id
+      });
+    }
 
     return NextResponse.json(comment, { status: 201 });
   } catch (error) {

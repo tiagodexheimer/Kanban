@@ -1,5 +1,8 @@
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { logActivity } from "@/lib/activity-log";
 
 export async function PATCH(
   request: Request,
@@ -7,6 +10,18 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
+    const session = await getServerSession(authOptions);
+    const userId = (session?.user as any)?.id;
+    
+    const oldCard = await prisma.card.findUnique({
+      where: { id },
+      include: { column: true }
+    });
+
+    if (!oldCard) {
+      return NextResponse.json({ error: "Card not found" }, { status: 404 });
+    }
+
     const body = await request.json();
     const { tagIds, assigneeIds, dueDate, ...rest } = body;
 
@@ -32,6 +47,27 @@ export async function PATCH(
       }
     });
 
+    if (userId) {
+      if (rest.columnId && rest.columnId !== oldCard.columnId) {
+        const newColumn = await prisma.column.findUnique({ where: { id: rest.columnId } });
+        await logActivity({
+          type: "MOVE_CARD",
+          description: `moveu "${card.title}" de "${oldCard.column.title}" para "${newColumn?.title}"`,
+          userId,
+          boardId: oldCard.column.boardId,
+          cardId: card.id
+        });
+      } else {
+        await logActivity({
+          type: "UPDATE_CARD",
+          description: `atualizou a tarefa "${card.title}"`,
+          userId,
+          boardId: oldCard.column.boardId,
+          cardId: card.id
+        });
+      }
+    }
+
     return NextResponse.json(card);
   } catch (error) {
     console.error("Error updating card:", error);
@@ -45,6 +81,22 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+    const session = await getServerSession(authOptions);
+    const userId = (session?.user as any)?.id;
+
+    const card = await prisma.card.findUnique({
+      where: { id },
+      include: { column: true }
+    });
+
+    if (card && userId) {
+      await logActivity({
+        type: "DELETE_CARD",
+        description: `excluiu a tarefa "${card.title}"`,
+        userId,
+        boardId: card.column.boardId
+      });
+    }
     
     await prisma.card.delete({
       where: { id },
