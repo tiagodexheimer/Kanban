@@ -84,6 +84,18 @@ export interface Activity {
   createdAt: string;
 }
 
+export interface BoardStats {
+  statusDistribution: { name: string; value: number }[];
+  priorityDistribution: { name: string; value: number }[];
+  burnDownData: { date: string; remaining: number; ideal: number }[];
+  productivityData: { date: string; completed: number }[];
+  summary: {
+    total: number;
+    done: number;
+    pending: number;
+  };
+}
+
 export function useBoards() {
   return useQuery<Board[]>({
     queryKey: ["boards"],
@@ -243,6 +255,7 @@ export function useUpdateCard() {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       queryClient.invalidateQueries({ queryKey: ["activities"] });
       queryClient.invalidateQueries({ queryKey: ["card-activities"] });
+      queryClient.invalidateQueries({ queryKey: ["board-stats"] });
     },
   });
 }
@@ -536,5 +549,17 @@ export function useCardActivities(cardId: string) {
       return res.json();
     },
     enabled: !!cardId,
+  });
+}
+
+export function useBoardStats(boardId: string) {
+  return useQuery<BoardStats>({
+    queryKey: ["board-stats", boardId],
+    queryFn: async () => {
+      const res = await fetch(`/api/boards/${boardId}/stats`);
+      if (!res.ok) throw new Error("Failed to fetch board stats");
+      return res.json();
+    },
+    enabled: !!boardId,
   });
 }

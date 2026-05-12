@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Search, LayoutGrid, List, Calendar, Filter, X, ChevronDown } from "lucide-react";
+import { Search, LayoutGrid, List, Calendar, Filter, X, ChevronDown, BarChart3 } from "lucide-react";
 import { useViewStore, ViewType } from "@/store/use-view-store";
 import { Tag } from "@/hooks/use-kanban";
 import { cn } from "@/lib/utils";
@@ -71,6 +71,18 @@ export function FilterBar({ tags }: FilterBarProps) {
           >
             <Calendar className="w-4 h-4" />
             Calendário
+          </button>
+          <button
+            onClick={() => setView("dashboard")}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+              currentView === "dashboard" 
+                ? "bg-background text-foreground shadow-sm" 
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <BarChart3 className="w-4 h-4" />
+            Dashboard
           </button>
         </div>
 

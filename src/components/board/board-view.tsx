@@ -18,6 +18,7 @@ import { KanbanBoard } from "./kanban-board";
 import { ListView } from "./list-view";
 import { CalendarView } from "./calendar-view";
 import { CardModal } from "./card-modal";
+import { DashboardView } from "./dashboard-view";
 import { ActivityLog } from "./activity-log";
 import { History, X } from "lucide-react";
 
@@ -169,6 +170,10 @@ export function BoardView() {
             columns={filteredColumns}
             onEditCard={openEditModal}
           />
+        )}
+
+        {currentView === "dashboard" && (
+          <DashboardView boardId={boardId!} />
         )}
       </div>
 
