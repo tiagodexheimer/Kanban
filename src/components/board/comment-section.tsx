@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useComments, useCreateComment, User } from "@/hooks/use-kanban";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Send, User as UserIcon } from "lucide-react";
 
@@ -13,8 +13,11 @@ export function CommentSection({ cardId }: CommentSectionProps) {
   const createCommentMutation = useCreateComment();
   const [text, setText] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent | React.MouseEvent | React.KeyboardEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (!text.trim()) return;
 
     createCommentMutation.mutate({ cardId, text }, {
@@ -43,7 +46,14 @@ export function CommentSection({ cardId }: CommentSectionProps) {
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-bold text-foreground">{comment.user.name}</span>
                   <span className="text-[10px] text-muted-foreground">
-                    {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: ptBR })}
+                    {(() => {
+                      const date = new Date(comment.createdAt);
+                      const isMoreThan24h = (Date.now() - date.getTime()) > 24 * 60 * 60 * 1000;
+                      
+                      return isMoreThan24h 
+                        ? format(date, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
+                        : formatDistanceToNow(date, { addSuffix: true, locale: ptBR });
+                    })()}
                   </span>
                 </div>
                 <div className="p-3 rounded-2xl bg-accent/30 text-sm text-foreground border border-border/50">
@@ -58,7 +68,7 @@ export function CommentSection({ cardId }: CommentSectionProps) {
         )}
       </div>
 
-      <form onSubmit={handleSubmit} className="flex gap-2 items-end pt-2">
+      <div className="flex gap-2 items-end pt-2">
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -68,18 +78,20 @@ export function CommentSection({ cardId }: CommentSectionProps) {
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
-              handleSubmit(e);
+              e.stopPropagation();
+              handleSubmit();
             }
           }}
         />
         <button
           disabled={!text.trim() || createCommentMutation.isPending}
-          type="submit"
+          type="button"
+          onClick={handleSubmit}
           className="p-3 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-all disabled:opacity-50 shadow-lg shadow-primary/20"
         >
           <Send size={18} />
         </button>
-      </form>
+      </div>
     </div>
   );
 }
