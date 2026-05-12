@@ -16,18 +16,65 @@ import {
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
+import { useBoards, useCreateBoard, useProjects, useCreateProject, useInviteToProject } from "@/hooks/use-kanban";
+import { useViewStore } from "@/store/use-view-store";
+import { toast } from "sonner";
+import { Folder, ChevronDown, Users, UserPlus } from "lucide-react";
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { data: session } = useSession();
+  const { data: boards, isLoading: isLoadingBoards } = useBoards();
+  const { data: projects, isLoading: isLoadingProjects } = useProjects();
+  const createBoardMutation = useCreateBoard();
+  const createProjectMutation = useCreateProject();
+  const inviteMutation = useInviteToProject();
+  const { activeBoardId, setActiveBoardId } = useViewStore();
+  const [expandedProjects, setExpandedProjects] = useState<string[]>([]);
+
+  const toggleProject = (projectId: string) => {
+    setExpandedProjects(prev => 
+      prev.includes(projectId) ? prev.filter(id => id !== projectId) : [...prev, projectId]
+    );
+  };
 
   const navItems = [
-    { icon: LayoutDashboard, label: "Boards", active: true },
     { icon: Star, label: "Favoritos" },
     { icon: Search, label: "Busca" },
     { icon: FolderKanban, label: "Projetos" },
     { icon: Settings, label: "Configurações" },
   ];
+
+  const handleCreateBoard = async (projectId?: string) => {
+    const title = prompt("Título do novo quadro:");
+    if (!title) return;
+
+    createBoardMutation.mutate({ 
+      title, 
+      description: "Novo quadro criado",
+      projectId
+    }, {
+      onSuccess: (data) => {
+        setActiveBoardId(data.id);
+      }
+    });
+  };
+
+  const handleCreateProject = async () => {
+    const title = prompt("Título do novo projeto:");
+    if (!title) return;
+
+    createProjectMutation.mutate({ 
+      title, 
+      description: "Novo projeto" 
+    });
+  };
+
+  const handleInvite = async (projectId: string) => {
+    const email = prompt("E-mail do usuário para convidar:");
+    if (!email) return;
+    inviteMutation.mutate({ projectId, email });
+  };
 
   return (
     <aside 
@@ -46,19 +93,135 @@ export function Sidebar() {
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto py-4 space-y-2 px-3">
-        {navItems.map((item, idx) => (
-          <button
-            key={idx}
-            className={cn(
-              "w-full flex items-center gap-3 p-2 rounded-lg transition-colors",
-              item.active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground"
+      <div className="flex-1 overflow-y-auto py-4 space-y-6 px-3">
+        <div className="space-y-1">
+          {navItems.map((item, idx) => (
+            <button
+              key={idx}
+              className={cn(
+                "w-full flex items-center gap-3 p-2 rounded-lg transition-colors text-muted-foreground hover:bg-accent hover:text-foreground"
+              )}
+            >
+              <item.icon size={20} />
+              {!isCollapsed && <span className="font-medium">{item.label}</span>}
+            </button>
+          ))}
+        </div>
+
+        <div className="space-y-4">
+          <div className="px-2 flex items-center justify-between group">
+            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Projetos</span>
+            {!isCollapsed && (
+              <button 
+                onClick={handleCreateProject}
+                className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-accent rounded transition-all"
+              >
+                <Plus size={14} />
+              </button>
             )}
-          >
-            <item.icon size={20} />
-            {!isCollapsed && <span className="font-medium">{item.label}</span>}
-          </button>
-        ))}
+          </div>
+          
+          <div className="space-y-1">
+            {isLoadingProjects ? (
+              <div className="px-2 py-1 text-xs text-muted-foreground animate-pulse">Carregando projetos...</div>
+            ) : (
+              projects?.map((project) => (
+                <div key={project.id} className="space-y-1">
+                  <div 
+                    className={cn(
+                      "group flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-accent transition-all",
+                      expandedProjects.includes(project.id) ? "bg-accent/50" : ""
+                    )}
+                    onClick={() => toggleProject(project.id)}
+                  >
+                    <Folder size={18} className="text-primary" />
+                    {!isCollapsed && (
+                      <div className="flex-1 flex items-center justify-between min-w-0">
+                        <span className="font-semibold text-sm truncate">{project.title}</span>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100">
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleInvite(project.id); }}
+                            className="p-1 hover:bg-primary/20 rounded text-primary"
+                            title="Convidar membro"
+                          >
+                            <UserPlus size={12} />
+                          </button>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleCreateBoard(project.id); }}
+                            className="p-1 hover:bg-primary/20 rounded text-primary"
+                            title="Novo quadro"
+                          >
+                            <Plus size={12} />
+                          </button>
+                          <ChevronDown size={14} className={cn("transition-transform", expandedProjects.includes(project.id) ? "rotate-180" : "")} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {expandedProjects.includes(project.id) && !isCollapsed && (
+                    <div className="ml-4 pl-2 border-l border-border space-y-1 mt-1 animate-in slide-in-from-top-1 duration-200">
+                      {project.boards.map((board) => (
+                        <button
+                          key={board.id}
+                          onClick={() => setActiveBoardId(board.id)}
+                          className={cn(
+                            "w-full flex items-center gap-3 p-1.5 rounded-lg text-sm transition-all",
+                            activeBoardId === board.id 
+                              ? "bg-primary/10 text-primary font-medium" 
+                              : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                          )}
+                        >
+                          <LayoutDashboard size={14} />
+                          <span className="truncate">{board.title}</span>
+                        </button>
+                      ))}
+                      {project.boards.length === 0 && (
+                        <div className="px-2 py-1 text-[10px] text-muted-foreground italic">Nenhum quadro</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          {!isCollapsed && (
+            <div className="px-2 flex items-center justify-between group">
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Quadros</span>
+              <button 
+                onClick={() => handleCreateBoard()}
+                className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-accent rounded transition-all"
+              >
+                <Plus size={14} />
+              </button>
+            </div>
+          )}
+          
+          <div className="space-y-1">
+            {isLoadingBoards ? (
+              <div className="px-2 py-1 text-xs text-muted-foreground animate-pulse">Carregando...</div>
+            ) : (
+              boards?.filter(b => !b.projectId).map((board) => (
+                <button
+                  key={board.id}
+                  onClick={() => setActiveBoardId(board.id)}
+                  className={cn(
+                    "w-full flex items-center gap-3 p-2 rounded-lg transition-all",
+                    activeBoardId === board.id || (!activeBoardId && boards.filter(b => !b.projectId)[0]?.id === board.id)
+                      ? "bg-primary/10 text-primary" 
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                  )}
+                >
+                  <LayoutDashboard size={18} />
+                  {!isCollapsed && <span className="font-medium truncate">{board.title}</span>}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="p-4 border-t border-border space-y-4">
@@ -107,10 +270,13 @@ export function Sidebar() {
           </Link>
         )}
 
-        <button className={cn(
-          "w-full flex items-center gap-3 bg-primary p-2.5 rounded-xl text-primary-foreground hover:opacity-90 transition-all shadow-lg shadow-primary/20 active:scale-95",
-          isCollapsed ? "justify-center px-0" : ""
-        )}>
+        <button 
+          onClick={handleCreateBoard}
+          className={cn(
+            "w-full flex items-center gap-3 bg-primary p-2.5 rounded-xl text-primary-foreground hover:opacity-90 transition-all shadow-lg shadow-primary/20 active:scale-95",
+            isCollapsed ? "justify-center px-0" : ""
+          )}
+        >
           <Plus size={20} />
           {!isCollapsed && <span className="font-semibold">Novo Board</span>}
         </button>

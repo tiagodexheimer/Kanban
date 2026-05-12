@@ -5,7 +5,22 @@ import { authOptions } from "@/lib/auth";
 
 export async function GET() {
   try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = (session.user as any).id;
+
     const boards = await prisma.board.findMany({
+      where: {
+        OR: [
+          { ownerId: userId },
+          { members: { some: { id: userId } } },
+          { project: { members: { some: { id: userId } } } }
+        ]
+      },
       include: {
         columns: {
           include: {
@@ -30,18 +45,26 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
+    
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
-    const { title, description } = body;
+    const { title, description, projectId } = body;
 
     if (!title) {
       return NextResponse.json({ error: "Título é obrigatório" }, { status: 400 });
     }
 
+    const userId = (session.user as any).id;
+
     const board = await prisma.board.create({
       data: {
         title,
         description,
-        ownerId: session?.user ? (session.user as any).id : null,
+        ownerId: userId,
+        projectId: projectId || null,
         columns: {
           create: [
             { title: "To Do", position: 1 },

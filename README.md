@@ -6,12 +6,12 @@ Documentação estratégica e técnica para o desenvolvimento do sistema de gere
 
 ## 🎯 Definição de MVP (Minimum Viable Product)
 Funcionalidades essenciais para a primeira versão funcional:
-- [ ] **Gestão de Boards:** Criação, edição e exclusão de quadros de trabalho.
-- [ ] **Colunas Dinâmicas:** Adição de listas (To Do, Doing, Done) com suporte a reordenação.
-- [ ] **Cartões (Cards):** Criação de tarefas com título, descrição e etiquetas.
-- [ ] **Drag-and-Drop:** Movimentação fluida de cartões entre colunas e reordenação interna.
-- [ ] **Persistência:** Salvamento automático de todas as alterações em banco de dados.
-- [ ] **Interface Responsiva:** Design moderno focado em usabilidade desktop.
+- [x] **Gestão de Boards:** Criação, edição e exclusão de quadros de trabalho.
+- [x] **Colunas Dinâmicas:** Adição de listas (To Do, Doing, Done) com suporte a reordenação.
+- [x] **Cartões (Cards):** Criação de tarefas com título, descrição e etiquetas.
+- [x] **Drag-and-Drop:** Movimentação fluida de cartões entre colunas e reordenação interna.
+- [x] **Persistência:** Salvamento automático de todas as alterações em banco de dados.
+- [x] **Interface Responsiva:** Design moderno focado em usabilidade desktop.
 
 ---
 
@@ -78,7 +78,8 @@ Aumentar a versatilidade do workspace.
 
 ### **Sprint 5: Colaboração & Workspace (Semana 5)**
 Transformar em uma ferramenta multi-usuário.
-- [ ] Autenticação com NextAuth (Google, GitHub, E-mail).
+- [x] Autenticação com NextAuth (Google, GitHub, E-mail).
+- [x] Gestão de múltiplos quadros (Workspace Switcher).
 - [ ] Atribuição de tarefas para diferentes membros da equipe.
 - [ ] Comentários em tempo real dentro dos cards.
 - [ ] Histórico de atividades (Activity Log).

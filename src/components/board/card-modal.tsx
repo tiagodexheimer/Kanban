@@ -5,7 +5,10 @@ import { Modal } from "../ui/modal";
 import { useBoards, useBoard, useUpdateCard, useCreateCard, useDeleteCard, Card, Tag } from "@/hooks/use-kanban";
 import { ChecklistEditor } from "./checklist-editor";
 import { TagSelector } from "./tag-selector";
-import { Calendar } from "lucide-react";
+import { AssigneeSelector } from "./assignee-selector";
+import { CommentSection } from "./comment-section";
+import { Calendar, Users } from "lucide-react";
+import { useProjects } from "@/hooks/use-kanban";
 
 interface CardModalProps {
   isOpen: boolean;
@@ -60,9 +63,16 @@ function CardForm({ card, columnId, onClose, boardTags, boardId }: CardFormProps
   const [dueDate, setDueDate] = useState<string>(
     card?.dueDate ? new Date(card.dueDate).toISOString().split('T')[0] : ""
   );
+  const { data: projects } = useProjects();
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
     card?.tags.map(t => t.id) || []
   );
+  const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>(
+    card?.assignees.map(a => a.id) || []
+  );
+
+  const project = projects?.find(p => p.id === board?.projectId);
+  const projectMembers = project?.members || [];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,7 +83,8 @@ function CardForm({ card, columnId, onClose, boardTags, boardId }: CardFormProps
       description,
       priority,
       dueDate: dueDate || null,
-      tagIds: selectedTagIds
+      tagIds: selectedTagIds,
+      assigneeIds: selectedAssigneeIds
     };
 
     if (card) {
@@ -86,7 +97,8 @@ function CardForm({ card, columnId, onClose, boardTags, boardId }: CardFormProps
         description,
         priority,
         dueDate: dueDate || null,
-        tagIds: selectedTagIds
+        tagIds: selectedTagIds,
+        assigneeIds: selectedAssigneeIds
       });
     }
     
@@ -171,6 +183,18 @@ function CardForm({ card, columnId, onClose, boardTags, boardId }: CardFormProps
             selectedTagIds={selectedTagIds}
             onChange={setSelectedTagIds}
           />
+        )}
+
+        <AssigneeSelector 
+          availableUsers={projectMembers}
+          selectedUserIds={selectedAssigneeIds}
+          onChange={setSelectedAssigneeIds}
+        />
+
+        {card && (
+          <div className="pt-4 border-t border-border/50">
+            <CommentSection cardId={card.id} />
+          </div>
         )}
 
         {card && (

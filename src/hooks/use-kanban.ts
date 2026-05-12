@@ -16,13 +16,31 @@ export interface Tag {
   boardId: string;
 }
 
+export interface User {
+  id: string;
+  name: string | null;
+  email: string | null;
+  image: string | null;
+}
+
+export interface Comment {
+  id: string;
+  text: string;
+  userId: string;
+  user: User;
+  cardId: string;
+  createdAt: string;
+}
+
 export interface Card {
   id: string;
   title: string;
   description?: string;
   priority: string;
   tags: Tag[];
+  assignees: User[];
   checklists: ChecklistItem[];
+  comments?: Comment[];
   position: number;
   columnId: string;
   dueDate?: string | Date | null;
@@ -41,6 +59,17 @@ export interface Board {
   description?: string;
   columns: Column[];
   tags: Tag[];
+  projectId?: string;
+}
+
+export interface Project {
+  id: string;
+  title: string;
+  description?: string;
+  ownerId: string;
+  owner: User;
+  members: User[];
+  boards: Board[];
 }
 
 export function useBoards() {
@@ -51,6 +80,84 @@ export function useBoards() {
       if (!res.ok) throw new Error("Failed to fetch boards");
       return res.json();
     },
+  });
+}
+
+// Project Hooks
+export function useProjects() {
+  return useQuery<Project[]>({
+    queryKey: ["projects"],
+    queryFn: async () => {
+      const res = await fetch("/api/projects");
+      if (!res.ok) throw new Error("Failed to fetch projects");
+      return res.json();
+    },
+  });
+}
+
+export function useCreateProject() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { title: string; description?: string }) => {
+      const res = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to create project");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      toast.success("Projeto criado com sucesso!");
+    }
+  });
+}
+
+export function useInviteToProject() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ projectId, email }: { projectId: string; email: string }) => {
+      const res = await fetch(`/api/projects/${projectId}/invite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to invite user");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      toast.success("Usuário convidado!");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    }
+  });
+}
+
+export function useCreateBoard() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { title: string; description?: string }) => {
+      const res = await fetch("/api/boards", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to create board");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["boards"] });
+      toast.success("Quadro criado com sucesso!");
+    },
+    onError: () => {
+      toast.error("Erro ao criar quadro");
+    }
   });
 }
 
@@ -70,10 +177,11 @@ export function useUpdateCard() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ id, tagIds, ...data }: Partial<Card> & { id: string; tagIds?: string[] }) => {
+    mutationFn: async ({ id, tagIds, assigneeIds, ...data }: Partial<Card> & { id: string; tagIds?: string[]; assigneeIds?: string[] }) => {
       const res = await fetch(`/api/cards/${id}`, {
         method: "PATCH",
-        body: JSON.stringify({ ...data, tagIds }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...data, tagIds, assigneeIds }),
       });
       return res.json();
     },
@@ -354,6 +462,36 @@ export function useCreateTag() {
     },
     onError: () => {
       toast.error("Erro ao criar etiqueta");
+    }
+  });
+}
+// Comment Hooks
+export function useComments(cardId: string) {
+  return useQuery<Comment[]>({
+    queryKey: ["comments", cardId],
+    queryFn: async () => {
+      const res = await fetch(`/api/cards/${cardId}/comments`);
+      if (!res.ok) throw new Error("Failed to fetch comments");
+      return res.json();
+    },
+    enabled: !!cardId,
+  });
+}
+
+export function useCreateComment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ cardId, text }: { cardId: string; text: string }) => {
+      const res = await fetch(`/api/cards/${cardId}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      if (!res.ok) throw new Error("Failed to create comment");
+      return res.json();
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["comments", variables.cardId] });
     }
   });
 }

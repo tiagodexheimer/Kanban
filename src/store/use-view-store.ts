@@ -17,11 +17,13 @@ interface ViewState {
   currentView: ViewType;
   filters: ViewFilters;
   sort: SortConfig;
+  activeBoardId: string | null;
   setView: (view: ViewType) => void;
   setSearch: (search: string) => void;
   togglePriority: (priority: string) => void;
   toggleTag: (tagId: string) => void;
   setSort: (sort: SortConfig) => void;
+  setActiveBoardId: (boardId: string | null) => void;
   resetFilters: () => void;
 }
 
@@ -36,6 +38,7 @@ export const useViewStore = create<ViewState>((set) => ({
     field: "createdAt",
     direction: "desc",
   },
+  activeBoardId: null,
   setView: (view) => set({ currentView: view }),
   setSearch: (search) => set((state) => ({ 
     filters: { ...state.filters, search } 
@@ -57,6 +60,7 @@ export const useViewStore = create<ViewState>((set) => ({
     },
   })),
   setSort: (sort) => set({ sort }),
+  setActiveBoardId: (boardId) => set({ activeBoardId: boardId }),
   resetFilters: () => set({
     filters: {
       search: "",

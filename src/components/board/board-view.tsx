@@ -19,14 +19,13 @@ import { CardModal } from "./card-modal";
 
 export function BoardView() {
   const { data: boards, isLoading: isLoadingBoards } = useBoards();
-  const boardId = boards?.[0]?.id;
+  const { activeBoardId, currentView, filters } = useViewStore();
   
+  const boardId = activeBoardId || boards?.[0]?.id;
   const { data: board, isLoading: isLoadingBoard } = useBoard(boardId!);
   const updateCardMutation = useUpdateCard();
   const createColumnMutation = useCreateColumn();
   const updateColumnMutation = useUpdateColumn();
-
-  const { currentView, filters } = useViewStore();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalData, setModalData] = useState<{ cardId?: string; columnId?: string }>({});
@@ -114,6 +113,16 @@ export function BoardView() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
+      <header className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">{board.title}</h1>
+          <p className="text-muted-foreground">{board.description || "Visualize e organize suas tarefas."}</p>
+        </div>
+        <div className="flex items-center gap-4">
+          {/* Espaço para filtros ou perfil */}
+        </div>
+      </header>
+
       <FilterBar tags={board.tags} />
 
       <div className="flex-1 overflow-auto min-h-0 custom-scrollbar">
