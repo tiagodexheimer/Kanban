@@ -87,6 +87,7 @@ export interface Board {
     canMoveTasks: boolean;
     canManageBoard: boolean;
   };
+  project?: Project;
 }
 
 export interface Project {

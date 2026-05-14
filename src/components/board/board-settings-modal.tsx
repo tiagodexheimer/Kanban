@@ -172,10 +172,10 @@ export function BoardSettingsModal({ isOpen, onClose, boardId }: BoardSettingsMo
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs overflow-hidden">
-                            {member.user.image ? <img src={member.user.image} alt="" className="w-full h-full object-cover" /> : member.user.name?.substring(0,2)}
+                            {member.user.image ? <img src={member.user.image} alt="" className="w-full h-full object-cover" /> : (member.user.name || "U").substring(0,2)}
                           </div>
                           <div>
-                            <p className="text-sm font-bold">{member.user.name}</p>
+                            <p className="text-sm font-bold">{member.user.name || "Sem Nome"}</p>
                             <p className="text-[10px] text-muted-foreground">{member.role}</p>
                           </div>
                         </div>

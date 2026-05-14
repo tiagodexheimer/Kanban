@@ -93,7 +93,7 @@ function CardForm({ card, columnId, onClose, boardTags, boardId, projectId, boar
   const [activeTab, setActiveTab] = useState<"geral" | "historico">("geral");
 
   const project = projects?.find(p => p.id === projectId);
-  const projectMembers = project?.members || [];
+  const projectMembers = project?.members.map(m => m.user) || [];
 
   const allCards = board?.columns.flatMap((c: any) => c.cards) || [];
   const availableParentCards = allCards.filter((c: any) => c.id !== card?.id && !c.parentId);

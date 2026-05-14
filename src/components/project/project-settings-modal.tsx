@@ -148,14 +148,14 @@ export function ProjectSettingsModal({ isOpen, onClose, project }: ProjectSettin
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold overflow-hidden">
                         {member.user.image ? (
-                          <img src={member.user.image} alt={member.user.name} className="w-full h-full object-cover" />
+                          <img src={member.user.image} alt={member.user.name || ""} className="w-full h-full object-cover" />
                         ) : (
-                          member.user.name?.substring(0, 2).toUpperCase()
+                          (member.user.name || "U").substring(0, 2).toUpperCase()
                         )}
                       </div>
                       <div>
-                        <p className="text-sm font-bold">{member.user.name}</p>
-                        <p className="text-xs text-muted-foreground">{member.user.email}</p>
+                        <p className="text-sm font-bold">{member.user.name || "Sem Nome"}</p>
+                        <p className="text-xs text-muted-foreground">{member.user.email || ""}</p>
                       </div>
                     </div>
 
