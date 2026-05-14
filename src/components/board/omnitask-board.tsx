@@ -35,7 +35,7 @@ interface OmnitaskBoardProps {
 }
 
 export function OmnitaskBoard({ 
-  columns, 
+  columns: initialColumns, 
   boardId, 
   onEditCard, 
   onAddCard, 
@@ -43,8 +43,16 @@ export function OmnitaskBoard({
   onUpdateCard,
   onUpdateColumn
 }: OmnitaskBoardProps) {
+  const [localColumns, setLocalColumns] = React.useState(initialColumns);
   const [activeCardId, setActiveCardId] = React.useState<string | null>(null);
   const [activeColumnId, setActiveColumnId] = React.useState<string | null>(null);
+
+  // Sync with props when they change externally
+  React.useEffect(() => {
+    if (!activeCardId && !activeColumnId) {
+      setLocalColumns(initialColumns);
+    }
+  }, [initialColumns, activeCardId, activeColumnId]);
   
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -75,24 +83,44 @@ export function OmnitaskBoard({
     const overType = over.data.current?.type;
 
     if (activeType === 'Column' && overType === 'Column') return;
-
     if (activeType === 'Column') return;
 
-    const activeCard = columns.flatMap(c => c.cards).find(c => c.id === activeId);
+    // Find the cards and columns locally
+    const activeCard = localColumns.flatMap(c => c.cards).find(c => c.id === activeId);
     if (!activeCard) return;
 
-    const isOverACard = !!columns.flatMap(c => c.cards).find(c => c.id === overId);
-    const isOverAColumn = !!columns.find(c => c.id === overId);
+    const overCard = localColumns.flatMap(c => c.cards).find(c => c.id === overId);
+    const overColumn = localColumns.find(c => c.id === overId);
 
-    if (isOverACard) {
-      const overCard = columns.flatMap(c => c.cards).find(c => c.id === overId);
-      if (overCard && activeCard.columnId !== overCard.columnId) {
-        onUpdateCard({ id: activeId, columnId: overCard.columnId, position: overCard.position });
-      }
-    } else if (isOverAColumn) {
-      if (activeCard.columnId !== overId) {
-        onUpdateCard({ id: activeId, columnId: overId, position: 0 });
-      }
+    if (!overCard && !overColumn) return;
+
+    const overColumnId = overCard ? overCard.columnId : overId;
+
+    if (activeCard.columnId !== overColumnId) {
+      setLocalColumns(prev => {
+        const activeCol = prev.find(c => c.id === activeCard.columnId);
+        const overCol = prev.find(c => c.id === overColumnId);
+
+        if (!activeCol || !overCol) return prev;
+
+        const activeCards = activeCol.cards.filter(c => c.id !== activeId);
+        const overCards = [...overCol.cards];
+        
+        const newCard = { ...activeCard, columnId: overColumnId };
+        
+        // Find insert position
+        const overIndex = overCard 
+          ? overCards.findIndex(c => c.id === overId) 
+          : overCards.length;
+        
+        overCards.splice(overIndex, 0, newCard);
+
+        return prev.map(c => {
+          if (c.id === activeCard.columnId) return { ...c, cards: activeCards };
+          if (c.id === overColumnId) return { ...c, cards: overCards };
+          return c;
+        });
+      });
     }
   }
 
@@ -111,24 +139,27 @@ export function OmnitaskBoard({
 
     if (activeType === 'Column') {
       if (activeId !== overId) {
-        const oldIndex = columns.findIndex((i) => i.id === activeId);
-        const newIndex = columns.findIndex((i) => i.id === overId);
-        const newOrder = arrayMove(columns, oldIndex, newIndex);
+        const oldIndex = localColumns.findIndex((i) => i.id === activeId);
+        const newIndex = localColumns.findIndex((i) => i.id === overId);
+        const newOrder = arrayMove(localColumns, oldIndex, newIndex);
         
+        setLocalColumns(newOrder);
+
         newOrder.forEach((col, index) => {
-          if (col.position !== index) {
-            onUpdateColumn({ id: col.id, position: index });
-          }
+          onUpdateColumn({ id: col.id, position: index });
         });
       }
     } else {
-      const activeCard = columns.flatMap(c => c.cards).find(c => c.id === activeId);
-      const overCard = columns.flatMap(c => c.cards).find(c => c.id === overId);
+      const activeCard = localColumns.flatMap(c => c.cards).find(c => c.id === activeId);
+      const overCard = localColumns.flatMap(c => c.cards).find(c => c.id === overId);
 
-      if (activeCard && overCard && activeCard.columnId === overCard.columnId) {
-        if (activeId !== overId) {
-          onUpdateCard({ id: activeId, position: overCard.position });
-        }
+      if (activeCard) {
+        // Sync the final position to server
+        onUpdateCard({ 
+          id: activeId, 
+          columnId: activeCard.columnId, 
+          position: activeCard.position 
+        });
       }
     }
 
@@ -136,9 +167,9 @@ export function OmnitaskBoard({
     setActiveColumnId(null);
   }
 
-  const columnIds = columns.map(c => c.id);
-  const activeCard = columns.flatMap(c => c.cards).find(c => c.id === activeCardId);
-  const activeColumn = columns.find(c => c.id === activeColumnId);
+  const columnIds = localColumns.map(c => c.id);
+  const activeCard = localColumns.flatMap(c => c.cards).find(c => c.id === activeCardId);
+  const activeColumn = localColumns.find(c => c.id === activeColumnId);
 
   return (
     <DndContext
@@ -150,7 +181,7 @@ export function OmnitaskBoard({
     >
       <div className="flex gap-6 h-full pb-8 overflow-x-auto custom-scrollbar">
         <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
-          {columns.map(column => (
+          {localColumns.map(column => (
             <Column 
               key={column.id} 
               column={column} 

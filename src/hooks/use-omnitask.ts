@@ -252,6 +252,18 @@ export function useBoard(boardId: string) {
   });
 }
 
+export function useBoardMembers(boardId: string) {
+  return useQuery<{ projectMembers: any[], boardPermissions: any[] }>({
+    queryKey: ["board-members", boardId],
+    queryFn: async () => {
+      const res = await fetch(`/api/boards/${boardId}/members`);
+      if (!res.ok) throw new Error("Failed to fetch board members");
+      return res.json();
+    },
+    enabled: !!boardId,
+  });
+}
+
 export function useUpdateCard() {
   const queryClient = useQueryClient();
   
@@ -272,12 +284,15 @@ export function useUpdateCard() {
       return res.json();
     },
     onMutate: async ({ id, ...newData }) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
       await queryClient.cancelQueries({ queryKey: ["board"] });
-      const previousBoard = queryClient.getQueryData<Board>(["board"]);
 
-      if (previousBoard) {
-        queryClient.setQueryData<Board>(["board"], (old) => {
-          if (!old) return old;
+      // Snapshot the previous value
+      const previousBoards = queryClient.getQueriesData<Board>({ queryKey: ["board"] });
+
+      // Optimistically update to the new value
+      queryClient.setQueriesData<Board>({ queryKey: ["board"] }, (old) => {
+        if (!old) return old;
           
           const newColumns = old.columns.map(col => {
             let newCards = col.cards.filter(c => c.id !== id);
@@ -301,13 +316,14 @@ export function useUpdateCard() {
 
           return { ...old, columns: newColumns };
         });
-      }
 
-      return { previousBoard };
+      return { previousBoards };
     },
     onError: (err, variables, context) => {
-      if (context?.previousBoard) {
-        queryClient.setQueryData(["board"], context.previousBoard);
+      if (context?.previousBoards) {
+        context.previousBoards.forEach(([queryKey, oldData]) => {
+          queryClient.setQueryData(queryKey, oldData);
+        });
       }
       toast.error("Erro ao sincronizar tarefa");
     },

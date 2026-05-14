@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Modal } from "../ui/modal";
-import { useBoard, useCustomFields, useDeleteBoard, useUpdateBoardPermission } from "@/hooks/use-omnitask";
+import { useBoard, useCustomFields, useDeleteBoard, useUpdateBoardPermission, useBoardMembers } from "@/hooks/use-omnitask";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2, Type, Hash, Calendar, DollarSign, List, Shield, AlertTriangle, Eye, Edit3, Move, Settings as SettingsIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -17,6 +17,7 @@ export function BoardSettingsModal({ isOpen, onClose, boardId }: BoardSettingsMo
   const queryClient = useQueryClient();
   const { data: board } = useBoard(boardId);
   const { data: fields } = useCustomFields(boardId);
+  const { data: memberData } = useBoardMembers(boardId);
   const deleteBoardMutation = useDeleteBoard();
   const updatePermission = useUpdateBoardPermission();
   const [newFieldName, setNewFieldName] = useState("");
@@ -25,13 +26,17 @@ export function BoardSettingsModal({ isOpen, onClose, boardId }: BoardSettingsMo
 
   const canManage = board?.userPermissions?.canManageBoard;
 
-  const members = board?.project?.members || [];
+  const members = memberData?.projectMembers || [];
 
   const handleTogglePermission = (userId: string, key: string, value: boolean) => {
     updatePermission.mutate({
       boardId,
       userId,
       [key]: value
+    }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["board-members", boardId] });
+      }
     });
   };
 
@@ -164,7 +169,7 @@ export function BoardSettingsModal({ isOpen, onClose, boardId }: BoardSettingsMo
 
               <div className="space-y-4">
                 {members.map((member) => {
-                  const perm = board?.permissions?.find(p => p.userId === member.userId);
+                  const perm = memberData?.boardPermissions?.find(p => p.userId === member.userId);
                   const isUserOwner = member.role === "OWNER" || member.role === "ADMIN";
                   
                   return (

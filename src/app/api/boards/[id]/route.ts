@@ -23,9 +23,8 @@ export async function GET(
         tags: true,
         customFields: true,
         permissions: {
-          include: {
-            user: { select: { id: true, name: true, image: true, email: true } }
-          }
+          where: { userId },
+          select: { canView: true, canEditTasks: true, canMoveTasks: true, canManageBoard: true }
         },
         columns: {
           orderBy: { position: "asc" },
@@ -35,25 +34,23 @@ export async function GET(
               orderBy: { position: "asc" },
               include: {
                 tags: true,
-                assignees: true,
+                assignees: { select: { id: true, name: true, image: true } },
                 customFieldValues: true,
                 blockedBy: { select: { id: true } },
                 subtasks: { select: { id: true } },
                 parent: { select: { title: true } },
-                comments: {
-                  include: { user: true }
-                },
-                checklists: {
-                  orderBy: { position: "asc" },
-                },
+                checklists: { select: { id: true, completed: true } },
               },
             },
           },
         },
         project: {
-          include: {
+          select: {
+            id: true,
+            ownerId: true,
             members: {
-              include: { user: { select: { id: true, name: true, image: true, email: true } } }
+              where: { userId },
+              select: { role: true }
             }
           }
         },
@@ -65,9 +62,9 @@ export async function GET(
     }
 
     // Check permissions
-    const isOwner = board.ownerId === userId;
-    const userPermission = board.permissions.find(p => p.userId === userId);
-    const projectMember = board.project?.members.find(m => m.userId === userId);
+    const isOwner = board.ownerId === userId || board.project?.ownerId === userId;
+    const userPermission = board.permissions[0];
+    const projectMember = board.project?.members[0];
     
     // Project roles that grant full board access
     const isProjectAdmin = projectMember?.role === "OWNER" || projectMember?.role === "ADMIN";
