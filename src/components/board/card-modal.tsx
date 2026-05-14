@@ -214,6 +214,7 @@ function CardForm({ card, columnId, onClose, boardTags, boardId, projectId, boar
                     parentId={card.id} 
                     columnId={card.columnId}
                     subtasks={card.subtasks || []} 
+                    board={board}
                   />
                 ) : (
                   <p className="text-xs text-muted-foreground italic ml-6">Salve a tarefa para poder adicionar subtarefas.</p>

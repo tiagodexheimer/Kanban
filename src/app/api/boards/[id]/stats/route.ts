@@ -41,50 +41,59 @@ export async function GET(
       { name: "Urgente", value: allCards.filter(c => c.priority === "Urgent").length },
     ];
 
-    // 3. Burn-down Data (Last 7 Days)
-    const burnDownData = [];
-    const doneColumn = board.columns.find(col => col.title.toLowerCase() === "done" || col.title.toLowerCase() === "concluído");
+    // 3. Burn-down Data (Dynamic range based on due dates)
+    const allCardsWithDates = allCards.filter(c => c.dueDate);
+    const maxDueDate = allCardsWithDates.length > 0 
+      ? new Date(Math.max(...allCardsWithDates.map(c => new Date(c.dueDate!).getTime())))
+      : subDays(new Date(), -7); // Fallback to 7 days in future
     
-    for (let i = 6; i >= 0; i--) {
-      const date = subDays(new Date(), i);
-      const dayStart = startOfDay(date);
-      const dayEnd = endOfDay(date);
+    // We'll show from 7 days ago until the last due date (at least today + 7 days)
+    const startDate = startOfDay(subDays(new Date(), 7));
+    const endDate = endOfDay(maxDueDate > new Date() ? maxDueDate : subDays(new Date(), -7));
+    
+    const burnDownData = [];
+    const productivityData = [];
+    
+    // Calculate total number of days
+    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    const doneColumn = board.columns.find(col => col.title.toLowerCase() === "done" || col.title.toLowerCase() === "concluído");
 
-      // Simple estimation: 
-      // Tasks remaining = (Total cards created until dayEnd) - (Cards moved to Done until dayEnd)
-      // Since we don't have full state history, we'll use a simplified version:
-      // Current remaining tasks - tasks completed between then and now
-      
+    for (let i = 0; i <= diffDays; i++) {
+      const date = subDays(startDate, -i);
+      const dayEnd = endOfDay(date);
+      const dayStart = startOfDay(date);
+
+      // Remaining tasks at the end of this day
       const totalCreatedUntilNow = allCards.filter(c => c.createdAt <= dayEnd).length;
       const totalDoneUntilNow = allCards.filter(c => 
         c.columnId === doneColumn?.id && 
         c.updatedAt <= dayEnd
       ).length;
 
+      // Ideal line: A straight line from total tasks to zero
+      const idealRemaining = Math.max(0, allCards.length - (allCards.length / diffDays) * i);
+      
       burnDownData.push({
         date: format(date, "dd/MM"),
-        remaining: Math.max(0, totalCreatedUntilNow - totalDoneUntilNow),
-        ideal: Math.max(0, allCards.length - (allCards.length / 7) * (7 - i)) // Ideal line
+        remaining: dayEnd > new Date() ? null : Math.max(0, totalCreatedUntilNow - totalDoneUntilNow),
+        ideal: Math.round(idealRemaining)
       });
-    }
 
-    // 4. Productivity (Tasks completed per day)
-    const productivityData = [];
-    for (let i = 6; i >= 0; i--) {
-      const date = subDays(new Date(), i);
-      const dayStart = startOfDay(date);
-      const dayEnd = endOfDay(date);
+      // Productivity (only for past and today)
+      if (dayStart <= new Date()) {
+        const completedCount = allCards.filter(c => 
+          c.columnId === doneColumn?.id && 
+          c.updatedAt >= dayStart && 
+          c.updatedAt <= dayEnd
+        ).length;
 
-      const completedCount = allCards.filter(c => 
-        c.columnId === doneColumn?.id && 
-        c.updatedAt >= dayStart && 
-        c.updatedAt <= dayEnd
-      ).length;
-
-      productivityData.push({
-        date: format(date, "dd/MM"),
-        completed: completedCount
-      });
+        productivityData.push({
+          date: format(date, "dd/MM"),
+          completed: completedCount
+        });
+      }
     }
 
     return NextResponse.json({

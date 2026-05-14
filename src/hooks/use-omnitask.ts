@@ -286,11 +286,36 @@ export function useUpdateCard() {
     onMutate: async ({ id, ...newData }) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
       await queryClient.cancelQueries({ queryKey: ["board"] });
+      await queryClient.cancelQueries({ queryKey: ["card", id] });
 
-      // Snapshot the previous value
+      // Snapshot the previous values
       const previousBoards = queryClient.getQueriesData<Board>({ queryKey: ["board"] });
+      const previousCards = queryClient.getQueriesData<Card>({ queryKey: ["card"] });
 
-      // Optimistically update to the new value
+      // Optimistically update any card query (could be the card itself or a parent containing it as subtask)
+      queryClient.setQueriesData<Card>({ queryKey: ["card"] }, (old) => {
+        if (!old) return old;
+        
+        // If it's the card itself being updated
+        if (old.id === id) {
+          return { ...old, ...newData } as Card;
+        }
+
+        // If it's a parent card, check its subtasks
+        if (old.subtasks) {
+          const hasSubtask = old.subtasks.some(s => s.id === id);
+          if (hasSubtask) {
+            return {
+              ...old,
+              subtasks: old.subtasks.map(s => s.id === id ? { ...s, ...newData } : s)
+            } as Card;
+          }
+        }
+
+        return old;
+      });
+
+      // Optimistically update to the new value in the boards
       queryClient.setQueriesData<Board>({ queryKey: ["board"] }, (old) => {
         if (!old) return old;
           
@@ -317,11 +342,16 @@ export function useUpdateCard() {
           return { ...old, columns: newColumns };
         });
 
-      return { previousBoards };
+      return { previousBoards, previousCards };
     },
     onError: (err, variables, context) => {
       if (context?.previousBoards) {
         context.previousBoards.forEach(([queryKey, oldData]) => {
+          queryClient.setQueryData(queryKey, oldData);
+        });
+      }
+      if (context?.previousCards) {
+        context.previousCards.forEach(([queryKey, oldData]) => {
           queryClient.setQueryData(queryKey, oldData);
         });
       }
