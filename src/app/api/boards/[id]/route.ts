@@ -26,11 +26,15 @@ export async function GET(
           orderBy: { position: "asc" },
           include: {
             cards: {
+              where: { parentId: null },
               orderBy: { position: "asc" },
               include: {
                 tags: true,
                 assignees: true,
                 customFieldValues: true,
+                blockedBy: { select: { id: true } },
+                subtasks: { select: { id: true } },
+                parent: { select: { title: true } },
                 comments: {
                   include: { user: true }
                 },

@@ -45,6 +45,13 @@ export interface Card {
   columnId: string;
   dueDate?: string | Date | null;
   customFieldValues?: CustomFieldValue[];
+  parentId?: string;
+  parent?: Card;
+  subtasks?: Card[];
+  blockedBy?: { id: string; title?: string }[];
+  blocking?: { id: string; title?: string }[];
+  relatedTo?: { id: string; title?: string }[];
+  relatesTo?: { id: string; title?: string }[];
   createdAt: string;
 }
 
@@ -229,11 +236,18 @@ export function useUpdateCard() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ id, tagIds, assigneeIds, ...data }: Partial<Card> & { id: string; tagIds?: string[]; assigneeIds?: string[] }) => {
+    mutationFn: async ({ id, tagIds, assigneeIds, blockedByIds, blockingIds, relatedToIds, ...data }: Partial<Card> & { 
+      id: string; 
+      tagIds?: string[]; 
+      assigneeIds?: string[];
+      blockedByIds?: string[];
+      blockingIds?: string[];
+      relatedToIds?: string[];
+    }) => {
       const res = await fetch(`/api/cards/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, tagIds, assigneeIds }),
+        body: JSON.stringify({ ...data, tagIds, assigneeIds, blockedByIds, blockingIds, relatedToIds }),
       });
       return res.json();
     },
@@ -301,6 +315,10 @@ export function useCreateCard() {
       dueDate?: string | null;
       tagIds?: string[];
       assigneeIds?: string[];
+      parentId?: string;
+      blockedByIds?: string[];
+      blockingIds?: string[];
+      relatedToIds?: string[];
     }) => {
       const res = await fetch("/api/cards", {
         method: "POST",
@@ -316,6 +334,65 @@ export function useCreateCard() {
     },
     onError: () => {
       toast.error("Erro ao criar tarefa");
+    }
+  });
+}
+
+export function useCard(cardId: string) {
+  return useQuery<Card>({
+    queryKey: ["card", cardId],
+    queryFn: async () => {
+      const res = await fetch(`/api/cards/${cardId}`);
+      if (!res.ok) throw new Error("Failed to fetch card");
+      return res.json();
+    },
+    enabled: !!cardId,
+  });
+}
+
+export function useCreateSubtask() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { 
+      title: string; 
+      parentId: string; 
+      columnId: string;
+      position: number;
+    }) => {
+      const res = await fetch("/api/cards", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      return res.json();
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["card", variables.parentId] });
+      queryClient.invalidateQueries({ queryKey: ["board"] });
+      toast.success("Subtarefa criada!");
+    }
+  });
+}
+
+export function useAddDependency() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ cardId, dependencyId, type }: { cardId: string; dependencyId: string; type: 'blockedBy' | 'blocking' | 'relatedTo' }) => {
+      const body: any = {};
+      if (type === 'blockedBy') body.blockedByIds = [dependencyId];
+      if (type === 'blocking') body.blockingIds = [dependencyId];
+      if (type === 'relatedTo') body.relatedToIds = [dependencyId];
+
+      const res = await fetch(`/api/cards/${cardId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      return res.json();
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["card", variables.cardId] });
+      toast.success("Relação adicionada!");
     }
   });
 }

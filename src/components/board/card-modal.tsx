@@ -2,15 +2,17 @@
 
 import React, { useState } from "react";
 import { Modal } from "../ui/modal";
-import { useBoards, useBoard, useUpdateCard, useCreateCard, useDeleteCard, Card, Tag } from "@/hooks/use-omnitask";
+import { useBoards, useBoard, useCard, useUpdateCard, useCreateCard, useDeleteCard, Card, Tag } from "@/hooks/use-omnitask";
 import { ChecklistEditor } from "./checklist-editor";
 import { TagSelector } from "./tag-selector";
 import { AssigneeSelector } from "./assignee-selector";
 import { CommentSection } from "./comment-section";
 import { ActivityLog } from "./activity-log";
 import { CustomFieldsEditor } from "./custom-fields-editor";
-import { Calendar, Users, History } from "lucide-react";
+import { Calendar, Users, History, Link as LinkIcon, Layers } from "lucide-react";
 import { useProjects } from "@/hooks/use-omnitask";
+import { SubtaskEditor } from "./subtask-editor";
+import { DependencyEditor } from "./dependency-editor";
 
 interface CardModalProps {
   isOpen: boolean;
@@ -26,7 +28,7 @@ export function CardModal({ isOpen, onClose, columnId, cardId, boardId: propBoar
   const { data: board } = useBoard(boardId!);
   
   const isEditing = !!cardId;
-  const currentCard = isEditing ? board?.columns.flatMap(c => c.cards).find(c => c.id === cardId) : null;
+  const { data: fullCard, isLoading: isLoadingCard } = useCard(cardId!);
 
   return (
     <Modal 
@@ -35,15 +37,19 @@ export function CardModal({ isOpen, onClose, columnId, cardId, boardId: propBoar
       title={isEditing ? "Detalhes da Tarefa" : "Nova Tarefa"}
     >
       {isOpen && (
-        <CardForm 
-          card={currentCard} 
-          columnId={columnId} 
-          onClose={onClose} 
-          boardTags={board?.tags || []}
-          boardId={boardId}
-          projectId={board?.projectId}
-          board={board}
-        />
+        isLoadingCard ? (
+          <div className="p-8 text-center text-muted-foreground animate-pulse">Carregando detalhes...</div>
+        ) : (
+          <CardForm 
+            card={fullCard} 
+            columnId={columnId} 
+            onClose={onClose} 
+            boardTags={board?.tags || []}
+            boardId={boardId}
+            projectId={board?.projectId}
+            board={board}
+          />
+        )
       )}
     </Modal>
   );
@@ -77,9 +83,16 @@ function CardForm({ card, columnId, onClose, boardTags, boardId, projectId, boar
   const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>(
     card?.assignees?.map(a => a.id) || []
   );
+  const [parentId, setParentId] = useState<string | undefined>(card?.parentId);
+  const [blockedByIds, setBlockedByIds] = useState<string[]>(card?.blockedBy?.map(d => d.id) || []);
+  const [blockingIds, setBlockingIds] = useState<string[]>(card?.blocking?.map(d => d.id) || []);
+  const [relatedToIds, setRelatedToIds] = useState<string[]>(card?.relatedTo?.map(d => d.id) || []);
 
   const project = projects?.find(p => p.id === projectId);
   const projectMembers = project?.members || [];
+
+  const allCards = board?.columns.flatMap((c: any) => c.cards) || [];
+  const availableParentCards = allCards.filter((c: any) => c.id !== card?.id && !c.parentId);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,7 +108,14 @@ function CardForm({ card, columnId, onClose, boardTags, boardId, projectId, boar
     };
 
     if (card) {
-      updateCardMutation.mutate({ id: card.id, ...cardData });
+      updateCardMutation.mutate({ 
+        id: card.id, 
+        ...cardData,
+        parentId,
+        blockedByIds,
+        blockingIds,
+        relatedToIds
+      });
     } else if (columnId) {
       createCardMutation.mutate({ 
         title, 
@@ -105,7 +125,11 @@ function CardForm({ card, columnId, onClose, boardTags, boardId, projectId, boar
         priority,
         dueDate: dueDate || null,
         tagIds: selectedTagIds,
-        assigneeIds: selectedAssigneeIds
+        assigneeIds: selectedAssigneeIds,
+        parentId,
+        blockedByIds,
+        blockingIds,
+        relatedToIds
       });
     }
     
@@ -183,6 +207,23 @@ function CardForm({ card, columnId, onClose, boardTags, boardId, projectId, boar
           />
         </div>
 
+        <div>
+          <label className="block text-xs font-bold text-muted-foreground uppercase mb-1.5 ml-1 flex items-center gap-2">
+            <Layers size={14} className="text-primary" />
+            Tarefa Pai (Aninhamento)
+          </label>
+          <select
+            value={parentId || ""}
+            onChange={(e) => setParentId(e.target.value || undefined)}
+            className="w-full bg-accent/30 border border-border/50 rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-primary transition-all"
+          >
+            <option value="">Nenhuma (Tarefa Principal)</option>
+            {availableParentCards.map((c: any) => (
+              <option key={c.id} value={c.id}>{c.title}</option>
+            ))}
+          </select>
+        </div>
+
         {boardId && (
           <TagSelector 
             boardId={boardId}
@@ -223,6 +264,37 @@ function CardForm({ card, columnId, onClose, boardTags, boardId, projectId, boar
             <ChecklistEditor 
               cardId={card.id} 
               items={card.checklists} 
+            />
+          </div>
+        )}
+
+        <div className="pt-4 border-t border-border/50">
+          <div className="flex items-center gap-2 mb-3">
+            <LinkIcon size={16} className="text-primary" />
+            <h3 className="text-sm font-bold text-foreground">Dependências e Relações</h3>
+          </div>
+          <DependencyEditor 
+            card={card || {}}
+            board={board}
+            blockedByIds={blockedByIds}
+            blockingIds={blockingIds}
+            relatedToIds={relatedToIds}
+            onBlockedByChange={setBlockedByIds}
+            onBlockingChange={setBlockingIds}
+            onRelatedToChange={setRelatedToIds}
+          />
+        </div>
+
+        {card && (
+          <div className="pt-4 border-t border-border/50">
+            <div className="flex items-center gap-2 mb-3">
+              <Layers size={16} className="text-primary" />
+              <h3 className="text-sm font-bold text-foreground">Subtarefas Aninhadas</h3>
+            </div>
+            <SubtaskEditor 
+              parentId={card.id} 
+              columnId={card.columnId}
+              subtasks={card.subtasks || []} 
             />
           </div>
         )}

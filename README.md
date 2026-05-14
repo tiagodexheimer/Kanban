@@ -95,9 +95,9 @@ Inspirado na inteligência do ClickUp.
 - [x] **Status Personalizados**: Definição de colunas e cores de status por quadro. Cada quadro pode ter seus próprios nomes de colunas e cores de status (ex: "Em Revisão", "Aguardando Cliente").
 
 ### **Sprint 8: Relacionamentos & Dependências (Semana 8)**
-- [ ] **Dependências de Tarefas**: Sistema de bloqueios ("Bloqueado por" / "Esperando por"). Marcar uma tarefa como "Bloqueada por" ou "Esperando por" outra tarefa.
-- [ ] **Relacionamentos entre Cards**: Lincar tarefas de quadros diferentes. Lincar cards de quadros diferentes (ex: um bug lincado a uma tarefa de desenvolvimento). 
-- [ ] **Subtarefas Aninhadas**: Suporte a subtarefas em múltiplos níveis. ermitir que subtarefas também tenham suas próprias subtarefas (recursividade).
+- [x] **Dependências de Tarefas**: Sistema de bloqueios ("Bloqueado por" / "Esperando por"). Marcar uma tarefa como "Bloqueada por" ou "Esperando por" outra tarefa.
+- [x] **Relacionamentos entre Cards**: Lincar tarefas de quadros diferentes. Lincar cards de quadros diferentes (ex: um bug lincado a uma tarefa de desenvolvimento). 
+- [x] **Subtarefas Aninhadas**: Suporte a subtarefas em múltiplos níveis. ermitir que subtarefas também tenham suas próprias subtarefas (recursividade).
 
 ### **Sprint 9: Docs & Conhecimento (Semana 9)**
 - [ ] **ClickUp Docs**: Editor de texto rico (Rich Text) para documentação interna.Um editor Rich Text (Slash commands, markdown) integrado para criar wikis e documentação de processos dentro do workspace.

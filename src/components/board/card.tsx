@@ -4,7 +4,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Card as CardType } from "@/hooks/use-omnitask";
 import { cn } from "@/lib/utils";
-import { GripVertical, Calendar, CheckCircle2 } from "lucide-react";
+import { GripVertical, Calendar, CheckCircle2, ShieldAlert, Layers, Link as LinkIcon } from "lucide-react";
 
 interface CardProps {
   card: CardType;
@@ -55,9 +55,13 @@ export function Card({ card, onClick }: CardProps) {
       onClick={onClick}
       className={cn(
         "group relative bg-card border border-border p-4 rounded-xl shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing mb-3",
-        isDragging && "opacity-50 grayscale"
+        isDragging && "opacity-50 grayscale",
+        card.parentId && "ml-4 border-l-4 border-l-primary/30"
       )}
     >
+      {card.parentId && (
+        <div className="absolute -left-3 top-4 text-primary font-bold">↳</div>
+      )}
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1">
           <div className="flex flex-wrap items-center gap-1.5 mb-2">
@@ -74,6 +78,11 @@ export function Card({ card, onClick }: CardProps) {
               </span>
             ))}
           </div>
+          {card.parent && (
+            <div className="text-[10px] font-bold text-primary/60 truncate max-w-[200px] mb-0.5 flex items-center gap-1">
+              <span className="opacity-70 italic">Pai:</span> {card.parent.title}
+            </div>
+          )}
           <h4 className="font-medium text-foreground leading-tight">{card.title}</h4>
         </div>
         <div className="p-1 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors shrink-0">
@@ -100,6 +109,19 @@ export function Card({ card, onClick }: CardProps) {
             )}>
               <Calendar size={12} />
               <span>{formattedDate}</span>
+            </div>
+          )}
+
+          {card.blockedBy && card.blockedBy.length > 0 && (
+            <div className="flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-500/10 text-red-500" title="Bloqueado">
+              <ShieldAlert size={12} />
+            </div>
+          )}
+
+          {card.subtasks && card.subtasks.length > 0 && (
+            <div className="flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-500" title="Possui subtarefas">
+              <Layers size={12} />
+              <span>{card.subtasks.length}</span>
             </div>
           )}
         </div>

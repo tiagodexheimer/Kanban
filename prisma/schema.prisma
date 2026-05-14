@@ -7,43 +7,39 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?   // Hashed password for CredentialsProvider
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  accounts      Account[]
-  sessions      Session[]
-  
-  // Workspace relations
-  ownedProjects Project[] @relation("ProjectOwner")
-  memberProjects Project[] @relation("ProjectMembers")
-  ownedBoards   Board[]   @relation("BoardOwner")
-  memberBoards  Board[]   @relation("BoardMembers")
-  assignedCards Card[]    @relation("CardAssignees")
-  comments      Comment[]
-  activities    Activity[]
+  id             String     @id @default(uuid())
+  name           String?
+  email          String?    @unique
+  emailVerified  DateTime?
+  image          String?
+  password       String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  accounts       Account[]
+  activities     Activity[]
+  ownedBoards    Board[]    @relation("BoardOwner")
+  comments       Comment[]
+  ownedProjects  Project[]  @relation("ProjectOwner")
+  sessions       Session[]
+  memberBoards   Board[]    @relation("BoardMembers")
+  assignedCards  Card[]     @relation("CardAssignees")
+  memberProjects Project[]  @relation("ProjectMembers")
 }
 
 model Account {
-  id                 String  @id @default(uuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String? @db.Text
-  access_token       String? @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String? @db.Text
-  session_state      String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String  @id @default(uuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -68,73 +64,65 @@ model Project {
   id          String   @id @default(uuid())
   title       String
   description String?
-  
   ownerId     String
-  owner       User     @relation("ProjectOwner", fields: [ownerId], references: [id])
-  members     User[]   @relation("ProjectMembers")
-  
-  boards      Board[]
-  folders     Folder[]
-  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  boards      Board[]
+  folders     Folder[]
+  owner       User     @relation("ProjectOwner", fields: [ownerId], references: [id])
+  members     User[]   @relation("ProjectMembers")
 }
 
 model Board {
-  id          String   @id @default(uuid())
-  title       String
-  description String?
-  themeColor  String?  @default("#7c3aed")
-  
-  ownerId     String
-  owner       User     @relation("BoardOwner", fields: [ownerId], references: [id])
-  members     User[]   @relation("BoardMembers")
-  
-  projectId   String?
-  project     Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  
-  folderId    String?
-  folder      Folder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
-  
-  columns     Column[]
-  tags        Tag[]
+  id           String        @id @default(uuid())
+  title        String
+  description  String?
+  themeColor   String?       @default("#7c3aed")
+  ownerId      String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  projectId    String?
+  folderId     String?
+  activities   Activity[]
+  folder       Folder?       @relation(fields: [folderId], references: [id])
+  owner        User          @relation("BoardOwner", fields: [ownerId], references: [id])
+  project      Project?      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  columns      Column[]
   customFields CustomField[]
-  activities  Activity[]
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  tags         Tag[]
+  members      User[]        @relation("BoardMembers")
 }
 
 model Folder {
-  id          String   @id @default(uuid())
-  title       String
-  projectId   String
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  boards      Board[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(uuid())
+  title     String
+  projectId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  boards    Board[]
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
 model CustomField {
-  id          String   @id @default(uuid())
-  name        String
-  type        String   // TEXT, NUMBER, DATE, DROPDOWN, CURRENCY
-  options     String?  // JSON string for DROPDOWN options
-  boardId     String
-  board       Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  values      CustomFieldValue[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String             @id @default(uuid())
+  name      String
+  type      String
+  options   String?
+  boardId   String
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  board     Board              @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  values    CustomFieldValue[]
 }
 
 model CustomFieldValue {
   id            String      @id @default(uuid())
-  value         String?     // Stored as string
+  value         String?
   cardId        String
-  card          Card        @relation(fields: [cardId], references: [id], onDelete: Cascade)
   customFieldId String
+  card          Card        @relation(fields: [cardId], references: [id], onDelete: Cascade)
   customField   CustomField @relation(fields: [customFieldId], references: [id], onDelete: Cascade)
-  
+
   @@unique([cardId, customFieldId])
 }
 
@@ -143,38 +131,40 @@ model Column {
   title     String
   position  Int
   boardId   String
-  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  cards     Card[]
-  
-  color     String?   // Custom status color
-  type      String    @default("IN_PROGRESS") // TODO, IN_PROGRESS, DONE
-  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  color     String?
+  type      String   @default("IN_PROGRESS")
+  cards     Card[]
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
 
   @@index([boardId])
 }
 
 model Card {
-  id          String   @id @default(uuid())
-  title       String
-  description String?
-  position    Int
-  priority    String   @default("Medium")
-  dueDate     DateTime?
-  
-  columnId    String
-  column      Column   @relation(fields: [columnId], references: [id], onDelete: Cascade)
-  
-  tags        Tag[]    @relation("CardTags")
-  assignees   User[]   @relation("CardAssignees")
-  checklists  ChecklistItem[]
-  comments    Comment[]
-  activities  Activity[]
-  customFieldValues CustomFieldValue[]
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                       String             @id @default(uuid())
+  title                    String
+  description              String?
+  position                 Int
+  priority                 String             @default("Medium")
+  dueDate                  DateTime?
+  columnId                 String
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
+  parentId                 String?
+  activities               Activity[]
+  column                   Column             @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  parent                   Card?              @relation("Subtasks", fields: [parentId], references: [id])
+  subtasks                 Card[]             @relation("Subtasks")
+  checklists               ChecklistItem[]
+  comments                 Comment[]
+  customFieldValues        CustomFieldValue[]
+  assignees                User[]             @relation("CardAssignees")
+  Card_CardDependencies_A  Card[]             @relation("CardDependencies")
+  Card_CardDependencies_B  Card[]             @relation("CardDependencies")
+  Card_CardRelationships_A Card[]             @relation("CardRelationships")
+  Card_CardRelationships_B Card[]             @relation("CardRelationships")
+  tags                     Tag[]              @relation("CardTags")
 
   @@index([columnId])
 }
@@ -183,27 +173,27 @@ model Comment {
   id        String   @id @default(uuid())
   text      String
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   cardId    String
-  card      Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  card      Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([cardId])
   @@index([userId])
 }
 
 model Activity {
-  id        String   @id @default(uuid())
-  type      String   // e.g., "MOVE_CARD", "CREATE_CARD", "ADD_COMMENT"
+  id          String   @id @default(uuid())
+  type        String
   description String
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  boardId   String
-  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  cardId    String?
-  card      Card?    @relation(fields: [cardId], references: [id], onDelete: SetNull)
-  createdAt DateTime @default(now())
+  userId      String
+  boardId     String
+  cardId      String?
+  createdAt   DateTime @default(now())
+  board       Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  card        Card?    @relation(fields: [cardId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([boardId])
   @@index([cardId])
@@ -214,10 +204,10 @@ model Tag {
   name      String
   color     String   @default("#7c3aed")
   boardId   String
-  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  cards     Card[]   @relation("CardTags")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cards     Card[]   @relation("CardTags")
 
   @@index([boardId])
 }
@@ -228,9 +218,9 @@ model ChecklistItem {
   completed Boolean  @default(false)
   position  Int
   cardId    String
-  card      Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  card      Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
 
   @@index([cardId])
 }

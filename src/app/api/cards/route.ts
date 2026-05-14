@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     const session = await getServerSession(authOptions);
     const userId = (session?.user as any)?.id;
     const body = await request.json();
-    const { title, columnId, position, description, priority, dueDate, tagIds, assigneeIds } = body;
+    const { title, columnId, position, description, priority, dueDate, tagIds, assigneeIds, parentId, blockedByIds, blockingIds, relatedToIds } = body;
 
     const column = await prisma.column.findUnique({
       where: { id: columnId },
@@ -24,11 +24,21 @@ export async function POST(request: Request) {
         description,
         priority: priority || "Medium",
         dueDate: dueDate ? new Date(dueDate) : null,
+        parentId,
         tags: tagIds ? {
           connect: tagIds.map((id: string) => ({ id }))
         } : undefined,
         assignees: assigneeIds ? {
           connect: assigneeIds.map((id: string) => ({ id }))
+        } : undefined,
+        blockedBy: blockedByIds ? {
+          connect: blockedByIds.map((id: string) => ({ id }))
+        } : undefined,
+        blocking: blockingIds ? {
+          connect: blockingIds.map((id: string) => ({ id }))
+        } : undefined,
+        relatedTo: relatedToIds ? {
+          connect: relatedToIds.map((id: string) => ({ id }))
         } : undefined,
       },
       include: {

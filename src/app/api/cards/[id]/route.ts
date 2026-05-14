@@ -4,6 +4,40 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { logActivity } from "@/lib/activity-log";
 
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const card = await prisma.card.findUnique({
+      where: { id },
+      include: {
+        tags: true,
+        assignees: true,
+        checklists: { orderBy: { position: "asc" } },
+        comments: { include: { user: true }, orderBy: { createdAt: "desc" } },
+        subtasks: { include: { tags: true, assignees: true } },
+        parent: true,
+        blockedBy: true,
+        blocking: true,
+        relatedTo: true,
+        relatesTo: true,
+        customFieldValues: true,
+      },
+    });
+
+    if (!card) {
+      return NextResponse.json({ error: "Card not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(card);
+  } catch (error) {
+    console.error("Error fetching card:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -23,7 +57,7 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { tagIds, assigneeIds, dueDate, ...rest } = body;
+    const { tagIds, assigneeIds, blockedByIds, blockingIds, relatedToIds, dueDate, ...rest } = body;
 
     const card = await prisma.card.update({
       where: { id },
@@ -36,11 +70,24 @@ export async function PATCH(
         assignees: assigneeIds !== undefined ? {
           set: assigneeIds.map((uid: string) => ({ id: uid }))
         } : undefined,
+        blockedBy: blockedByIds !== undefined ? {
+          set: blockedByIds.map((bid: string) => ({ id: bid }))
+        } : undefined,
+        blocking: blockingIds !== undefined ? {
+          set: blockingIds.map((bid: string) => ({ id: bid }))
+        } : undefined,
+        relatedTo: relatedToIds !== undefined ? {
+          set: relatedToIds.map((rid: string) => ({ id: rid }))
+        } : undefined,
       },
       include: {
         tags: true,
         assignees: true,
         checklists: true,
+        blockedBy: true,
+        blocking: true,
+        relatedTo: true,
+        subtasks: true,
         comments: {
           include: { user: true }
         }
