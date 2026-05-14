@@ -101,7 +101,7 @@ export function DashboardView({ boardId }: DashboardViewProps) {
             <span className="text-[10px] bg-secondary px-2 py-1 rounded-full text-muted-foreground font-bold uppercase tracking-wider">Últimos 7 dias</span>
           </div>
           <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <AreaChart data={stats.burnDownData}>
                 <defs>
                   <linearGradient id="colorRemaining" x1="0" y1="0" x2="0" y2="1">
@@ -154,7 +154,7 @@ export function DashboardView({ boardId }: DashboardViewProps) {
             <span className="text-[10px] bg-secondary px-2 py-1 rounded-full text-muted-foreground font-bold uppercase tracking-wider">Tarefas Concluídas</span>
           </div>
           <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <BarChart data={stats.productivityData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={mode === "dark" ? "#27272a" : "#e2e8f0"} />
                 <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} />
@@ -186,7 +186,7 @@ export function DashboardView({ boardId }: DashboardViewProps) {
             <h3 className="font-bold text-lg">Distribuição por Status</h3>
           </div>
           <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <PieChart>
                 <Pie
                   data={stats.statusDistribution}
@@ -223,7 +223,7 @@ export function DashboardView({ boardId }: DashboardViewProps) {
             <h3 className="font-bold text-lg">Tarefas por Prioridade</h3>
           </div>
           <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <BarChart layout="vertical" data={stats.priorityDistribution}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={mode === "dark" ? "#27272a" : "#e2e8f0"} />
                 <XAxis type="number" axisLine={false} tickLine={false} hide />

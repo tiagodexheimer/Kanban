@@ -40,12 +40,11 @@ export function CalendarView({ columns, onEditCard }: CalendarViewProps) {
       
       const d = new Date(card.dueDate);
       
-      // We check both UTC and Local date to be safe against timezone shifts
-      // This ensures the task shows up on the day it was intended
-      const matchesUTC = d.getUTCDate() === day && d.getUTCMonth() === month && d.getUTCFullYear() === year;
-      const matchesLocal = d.getDate() === day && d.getMonth() === month && d.getFullYear() === year;
-      
-      return matchesUTC || matchesLocal;
+      // Use UTC date to avoid timezone shifts for deadlines
+      // (Deadlines are typically stored as YYYY-MM-DDT00:00:00Z)
+      return d.getUTCDate() === day && 
+             d.getUTCMonth() === month && 
+             d.getUTCFullYear() === year;
     });
   };
 
