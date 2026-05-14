@@ -6,11 +6,12 @@ import { CheckSquare, Square, Trash2, Plus, ChevronDown, ChevronRight } from "lu
 import { cn } from "@/lib/utils";
 
 interface ChecklistEditorProps {
-  cardId: string;
-  items: ChecklistItem[];
+  cardId?: string;
+  items: any[];
+  onChange?: (items: any[]) => void;
 }
 
-export function ChecklistEditor({ cardId, items }: ChecklistEditorProps) {
+export function ChecklistEditor({ cardId, items, onChange }: ChecklistEditorProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [newItemText, setNewItemText] = useState("");
   
@@ -24,8 +25,37 @@ export function ChecklistEditor({ cardId, items }: ChecklistEditorProps) {
   const handleAddItem = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newItemText.trim()) return;
-    createItem.mutate({ text: newItemText, cardId, position: items.length });
+
+    if (cardId) {
+      createItem.mutate({ text: newItemText, cardId, position: items.length });
+    } else if (onChange) {
+      onChange([...items, { text: newItemText, completed: false, position: items.length, id: Math.random().toString() }]);
+    }
     setNewItemText("");
+  };
+
+  const handleToggleItem = (item: any) => {
+    if (cardId) {
+      updateItem.mutate({ id: item.id, completed: !item.completed });
+    } else if (onChange) {
+      onChange(items.map(i => i.id === item.id ? { ...i, completed: !i.completed } : i));
+    }
+  };
+
+  const handleUpdateText = (item: any, text: string) => {
+    if (cardId) {
+      updateItem.mutate({ id: item.id, text });
+    } else if (onChange) {
+      onChange(items.map(i => i.id === item.id ? { ...i, text } : i));
+    }
+  };
+
+  const handleDeleteItem = (id: string) => {
+    if (cardId) {
+      deleteItem.mutate(id);
+    } else if (onChange) {
+      onChange(items.filter(i => i.id !== id));
+    }
   };
 
   return (
@@ -59,7 +89,7 @@ export function ChecklistEditor({ cardId, items }: ChecklistEditorProps) {
               <div key={item.id} className="flex items-center gap-3 group">
                 <button
                   type="button"
-                  onClick={() => updateItem.mutate({ id: item.id, completed: !item.completed })}
+                  onClick={() => handleToggleItem(item)}
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
                   {item.completed ? (
@@ -71,7 +101,7 @@ export function ChecklistEditor({ cardId, items }: ChecklistEditorProps) {
                 <input
                   type="text"
                   value={item.text}
-                  onChange={(e) => updateItem.mutate({ id: item.id, text: e.target.value })}
+                  onChange={(e) => handleUpdateText(item, e.target.value)}
                   className={cn(
                     "flex-1 bg-transparent border-none p-0 text-sm focus:ring-0 outline-none transition-all",
                     item.completed && "line-through text-muted-foreground"
@@ -79,7 +109,7 @@ export function ChecklistEditor({ cardId, items }: ChecklistEditorProps) {
                 />
                 <button
                   type="button"
-                  onClick={() => deleteItem.mutate(item.id)}
+                  onClick={() => handleDeleteItem(item.id)}
                   className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-all"
                 >
                   <Trash2 size={14} />

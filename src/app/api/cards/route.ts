@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     const session = await getServerSession(authOptions);
     const userId = (session?.user as any)?.id;
     const body = await request.json();
-    const { title, columnId, position, description, priority, dueDate, tagIds, assigneeIds, parentId, blockedByIds, blockingIds, relatedToIds } = body;
+    const { title, columnId, position, description, priority, dueDate, tagIds, assigneeIds, parentId, blockedByIds, blockingIds, relatedToIds, checklists } = body;
 
     const column = await prisma.column.findUnique({
       where: { id: columnId },
@@ -39,6 +39,13 @@ export async function POST(request: Request) {
         } : undefined,
         relatedTo: relatedToIds ? {
           connect: relatedToIds.map((id: string) => ({ id }))
+        } : undefined,
+        checklists: checklists ? {
+          create: checklists.map((item: any) => ({
+            text: item.text,
+            completed: item.completed || false,
+            position: item.position || 0
+          }))
         } : undefined,
       },
       include: {

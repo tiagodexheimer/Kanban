@@ -160,10 +160,10 @@ model Card {
   comments                 Comment[]
   customFieldValues        CustomFieldValue[]
   assignees                User[]             @relation("CardAssignees")
-  Card_CardDependencies_A  Card[]             @relation("CardDependencies")
-  Card_CardDependencies_B  Card[]             @relation("CardDependencies")
-  Card_CardRelationships_A Card[]             @relation("CardRelationships")
-  Card_CardRelationships_B Card[]             @relation("CardRelationships")
+  blockedBy                Card[]             @relation("CardDependencies")
+  blocking                 Card[]             @relation("CardDependencies")
+  relatedTo                Card[]             @relation("CardRelationships")
+  relatesTo                Card[]             @relation("CardRelationships")
   tags                     Tag[]              @relation("CardTags")
 
   @@index([columnId])

@@ -319,6 +319,7 @@ export function useCreateCard() {
       blockedByIds?: string[];
       blockingIds?: string[];
       relatedToIds?: string[];
+      checklists?: { text: string; completed: boolean; position: number }[];
     }) => {
       const res = await fetch("/api/cards", {
         method: "POST",

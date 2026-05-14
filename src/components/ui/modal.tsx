@@ -3,15 +3,23 @@
 import React, { useEffect } from "react";
 import { X } from "lucide-react";
 import { createPortal } from "react-dom";
+import { cn } from "@/lib/utils";
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  size?: "md" | "lg" | "xl" | "full";
 }
 
-export function Modal({ isOpen, onClose, title, children }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, size = "md" }: ModalProps) {
+  const sizeClasses = {
+    md: "max-w-md",
+    lg: "max-w-2xl",
+    xl: "max-w-4xl",
+    full: "max-w-[95vw]",
+  };
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -37,7 +45,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
       />
       
       {/* Content */}
-      <div className="relative w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
+      <div className={cn("relative w-full bg-card border border-border rounded-2xl shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden", sizeClasses[size])}>
         <div className="flex items-center justify-between p-4 border-b border-border bg-accent/50">
           <h3 className="font-bold text-lg text-foreground">{title}</h3>
           <button 
