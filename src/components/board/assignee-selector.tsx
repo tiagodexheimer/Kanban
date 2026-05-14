@@ -1,5 +1,5 @@
 import React from "react";
-import { User } from "@/hooks/use-kanban";
+import { User } from "@/hooks/use-omnitask";
 import { User as UserIcon, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 

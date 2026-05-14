@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
-import { useBoards, useCreateBoard, useProjects, useCreateProject, useInviteToProject, useCreateFolder } from "@/hooks/use-kanban";
+import { useBoards, useCreateBoard, useProjects, useCreateProject, useInviteToProject, useCreateFolder } from "@/hooks/use-omnitask";
 import { useViewStore } from "@/store/use-view-store";
 import { toast } from "sonner";
 import { Folder, ChevronDown, Users, UserPlus, FolderPlus } from "lucide-react";
@@ -104,7 +104,7 @@ export function Sidebar() {
       )}
     >
       <div className="p-4 flex items-center justify-between border-b border-border">
-        {!isCollapsed && <span className="font-bold text-xl bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">Kanban</span>}
+        {!isCollapsed && <span className="font-bold text-xl bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">OmniTask</span>}
         <div className="flex items-center gap-1">
           {!isCollapsed && <ThemeToggle />}
           <button 

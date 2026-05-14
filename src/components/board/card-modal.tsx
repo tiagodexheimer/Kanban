@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Modal } from "../ui/modal";
-import { useBoards, useBoard, useUpdateCard, useCreateCard, useDeleteCard, Card, Tag } from "@/hooks/use-kanban";
+import { useBoards, useBoard, useUpdateCard, useCreateCard, useDeleteCard, Card, Tag } from "@/hooks/use-omnitask";
 import { ChecklistEditor } from "./checklist-editor";
 import { TagSelector } from "./tag-selector";
 import { AssigneeSelector } from "./assignee-selector";
@@ -10,7 +10,7 @@ import { CommentSection } from "./comment-section";
 import { ActivityLog } from "./activity-log";
 import { CustomFieldsEditor } from "./custom-fields-editor";
 import { Calendar, Users, History } from "lucide-react";
-import { useProjects } from "@/hooks/use-kanban";
+import { useProjects } from "@/hooks/use-omnitask";
 
 interface CardModalProps {
   isOpen: boolean;

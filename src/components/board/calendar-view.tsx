@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Column, Card as CardType } from "@/hooks/use-kanban";
+import { Column, Card as CardType } from "@/hooks/use-omnitask";
 import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 

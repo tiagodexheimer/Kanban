@@ -1,5 +1,5 @@
 import React from "react";
-import { useActivities, useCardActivities, Activity } from "@/hooks/use-kanban";
+import { useActivities, useCardActivities, Activity } from "@/hooks/use-omnitask";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { History, User as UserIcon, MessageSquare, Plus, ArrowRight, Trash2, Layout } from "lucide-react";

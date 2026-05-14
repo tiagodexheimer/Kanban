@@ -10,11 +10,11 @@ import {
   useCreateBoard,
   Column as ColumnType,
   Card as CardType
-} from "@/hooks/use-kanban";
+} from "@/hooks/use-omnitask";
 import { useViewStore } from "@/store/use-view-store";
 import { cn } from "@/lib/utils";
 import { FilterBar } from "./filter-bar";
-import { KanbanBoard } from "./kanban-board";
+import { OmnitaskBoard } from "./omnitask-board";
 import { ListView } from "./list-view";
 import { CalendarView } from "./calendar-view";
 import { CardModal } from "./card-modal";
@@ -157,7 +157,7 @@ export function BoardView() {
 
       <div className="flex-1 overflow-auto min-h-0 custom-scrollbar">
         {currentView === "board" && (
-          <KanbanBoard 
+          <OmnitaskBoard 
             columns={filteredColumns} 
             boardId={boardId!}
             onEditCard={openEditModal}

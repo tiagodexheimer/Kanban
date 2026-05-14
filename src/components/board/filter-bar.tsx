@@ -3,7 +3,7 @@
 import React from "react";
 import { Search, LayoutGrid, List, Calendar, Filter, X, ChevronDown, BarChart3 } from "lucide-react";
 import { useViewStore, ViewType } from "@/store/use-view-store";
-import { Tag } from "@/hooks/use-kanban";
+import { Tag } from "@/hooks/use-omnitask";
 import { cn } from "@/lib/utils";
 
 interface FilterBarProps {

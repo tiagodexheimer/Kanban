@@ -19,7 +19,7 @@ async function main() {
   const board = await prisma.board.create({
     data: {
       title: "Meu Primeiro Board",
-      description: "Bem-vindo ao seu Kanban Pessoal!",
+      description: "Bem-vindo ao seu OmniTask!",
       columns: {
         create: [
           {

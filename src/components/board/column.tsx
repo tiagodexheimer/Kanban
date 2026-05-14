@@ -3,7 +3,7 @@
 import React from "react";
 import { useSortable, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Column as ColumnType, Card as CardType, useUpdateColumn, useDeleteColumn } from "@/hooks/use-kanban";
+import { Column as ColumnType, Card as CardType, useUpdateColumn, useDeleteColumn } from "@/hooks/use-omnitask";
 import { Card } from "./card";
 import { Plus, MoreHorizontal, Check, X, GripVertical, Trash2, Palette, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";

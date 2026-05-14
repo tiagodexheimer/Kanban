@@ -19,12 +19,12 @@ import {
   arrayMove,
   sortableKeyboardCoordinates
 } from "@dnd-kit/sortable";
-import { Column as ColumnType, Card as CardType } from "@/hooks/use-kanban";
+import { Column as ColumnType, Card as CardType } from "@/hooks/use-omnitask";
 import { Column } from "./column";
 import { Card } from "./card";
 import { createPortal } from "react-dom";
 
-interface KanbanBoardProps {
+interface OmnitaskBoardProps {
   columns: ColumnType[];
   boardId: string;
   onEditCard: (cardId: string, columnId: string) => void;
@@ -34,7 +34,7 @@ interface KanbanBoardProps {
   onUpdateColumn: (data: any) => void;
 }
 
-export function KanbanBoard({ 
+export function OmnitaskBoard({ 
   columns, 
   boardId, 
   onEditCard, 
@@ -42,7 +42,7 @@ export function KanbanBoard({
   onAddColumn,
   onUpdateCard,
   onUpdateColumn
-}: KanbanBoardProps) {
+}: OmnitaskBoardProps) {
   const [activeCardId, setActiveCardId] = React.useState<string | null>(null);
   const [activeColumnId, setActiveColumnId] = React.useState<string | null>(null);
   

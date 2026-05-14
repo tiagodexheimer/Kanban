@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useComments, useCreateComment, User } from "@/hooks/use-kanban";
+import { useComments, useCreateComment, User } from "@/hooks/use-omnitask";
 import { formatDistanceToNow, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Send, User as UserIcon } from "lucide-react";

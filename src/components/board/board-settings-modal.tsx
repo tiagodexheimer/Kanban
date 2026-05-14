@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Modal } from "../ui/modal";
-import { useBoard, useCustomFields } from "@/hooks/use-kanban";
+import { useBoard, useCustomFields } from "@/hooks/use-omnitask";
 import { Plus, Trash2, Type, Hash, Calendar, DollarSign, List } from "lucide-react";
 
 interface BoardSettingsModalProps {

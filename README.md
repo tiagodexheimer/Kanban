@@ -1,4 +1,4 @@
-# ClickUp Pessoal - Módulo Kanban
+# OmniTask
 
 Documentação estratégica e técnica para o desenvolvimento do sistema de gerenciamento de tarefas.
 
@@ -90,8 +90,8 @@ Inspirado na inteligência do ClickUp.
 - [x] Dark/Light mode toggle avançado com temas customizáveis.
 
 ### **Sprint 7: Flexibilidade & Estrutura (Semana 7)**
-- [ ] **Campos Customizados**: Adição de campos de texto, números ou dropdowns específicos por quadro. Permitir que o usuário adicione campos de texto, números, dinheiro ou dropdowns específicos para cada quadro.
-- [ ] **Hierarquia de Pastas**: O Criar uma camada acima dos quadros (Espaços -> Pastas -> Quadros), permitindo organizar múltiplos projetos. 
+- [x] **Campos Customizados**: Adição de campos de texto, números ou dropdowns específicos por quadro. Permitir que o usuário adicione campos de texto, números, dinheiro ou dropdowns específicos para cada quadro.
+- [x] **Hierarquia de Pastas**: O Criar uma camada acima dos quadros (Espaços -> Pastas -> Quadros), permitindo organizar múltiplos projetos. 
 - [x] **Status Personalizados**: Definição de colunas e cores de status por quadro. Cada quadro pode ter seus próprios nomes de colunas e cores de status (ex: "Em Revisão", "Aguardando Cliente").
 
 ### **Sprint 8: Relacionamentos & Dependências (Semana 8)**

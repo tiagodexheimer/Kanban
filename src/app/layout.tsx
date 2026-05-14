@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Kanban Pessoal | ClickUp Clone",
-  description: "Gerencie suas tarefas com eficiência e estilo.",
+  title: "OmniTask | Gestão Inteligente",
+  description: "Gerencie suas tarefas com OmniTask - Eficiência e Estilo.",
 };
 
 import { AuthProvider } from "@/components/providers/auth-provider";

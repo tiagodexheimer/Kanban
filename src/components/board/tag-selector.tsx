@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Tag, useCreateTag } from "@/hooks/use-kanban";
+import { Tag, useCreateTag } from "@/hooks/use-omnitask";
 import { Tag as TagIcon, X, Plus, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 

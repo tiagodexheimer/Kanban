@@ -2,7 +2,7 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Card as CardType } from "@/hooks/use-kanban";
+import { Card as CardType } from "@/hooks/use-omnitask";
 import { cn } from "@/lib/utils";
 import { GripVertical, Calendar, CheckCircle2 } from "lucide-react";
 

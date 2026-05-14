@@ -5,7 +5,7 @@ import {
   LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
 } from "recharts";
-import { useBoardStats } from "@/hooks/use-kanban";
+import { useBoardStats } from "@/hooks/use-omnitask";
 import { useTheme } from "@/components/providers/theme-provider";
 import { 
   TrendingDown, CheckCircle2, Clock, ListTodo, 

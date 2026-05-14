@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { CustomField, CustomFieldValue, useUpdateCustomValue } from "@/hooks/use-kanban";
+import { CustomField, CustomFieldValue, useUpdateCustomValue } from "@/hooks/use-omnitask";
 import { cn } from "@/lib/utils";
 import { Hash, Type, Calendar as CalendarIcon, DollarSign, List } from "lucide-react";
 

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Card, Column, CustomField } from "@/hooks/use-kanban";
+import { Card, Column, CustomField } from "@/hooks/use-omnitask";
 import { Calendar, Tag as TagIcon, MoreHorizontal, CheckCircle2, Hash, Type, DollarSign, List } from "lucide-react";
 import { cn } from "@/lib/utils";
 

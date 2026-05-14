@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ChecklistItem, useCreateChecklistItem, useUpdateChecklistItem, useDeleteChecklistItem } from "@/hooks/use-kanban";
+import { ChecklistItem, useCreateChecklistItem, useUpdateChecklistItem, useDeleteChecklistItem } from "@/hooks/use-omnitask";
 import { CheckSquare, Square, Trash2, Plus, ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
