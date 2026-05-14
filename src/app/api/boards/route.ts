@@ -17,8 +17,8 @@ export async function GET() {
       where: {
         OR: [
           { ownerId: userId },
-          { members: { some: { id: userId } } },
-          { project: { members: { some: { id: userId } } } }
+          { permissions: { some: { userId, canView: true } } },
+          { project: { members: { some: { userId } } } }
         ]
       },
       include: {
@@ -33,6 +33,13 @@ export async function GET() {
           },
         },
         tags: true,
+        permissions: {
+          include: {
+            user: {
+              select: { id: true, name: true, image: true }
+            }
+          }
+        }
       },
       orderBy: { updatedAt: "desc" },
     });
@@ -67,6 +74,15 @@ export async function POST(request: Request) {
         ownerId: userId,
         projectId: projectId || null,
         folderId: folderId || null,
+        permissions: {
+          create: {
+            userId,
+            canView: true,
+            canEditTasks: true,
+            canMoveTasks: true,
+            canManageBoard: true
+          }
+        },
         columns: {
           create: [
             { title: "To Do", position: 1 },

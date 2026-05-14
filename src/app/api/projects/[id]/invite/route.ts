@@ -27,7 +27,7 @@ export async function POST(
 
     if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
 
-    const isMember = project.members.some(m => m.id === userId);
+    const isMember = project.members.some(m => m.userId === userId);
     const isOwner = project.ownerId === userId;
 
     if (!isMember && !isOwner) {
@@ -43,21 +43,34 @@ export async function POST(
       return NextResponse.json({ error: "User not found with this email" }, { status: 404 });
     }
 
+    // Check if user is already a member
+    const alreadyMember = project.members.some(m => m.userId === userToInvite.id);
+    if (alreadyMember) {
+      return NextResponse.json({ error: "User is already a member of this project" }, { status: 400 });
+    }
+
     // Add user to project
     const updatedProject = await prisma.project.update({
       where: { id: projectId },
       data: {
         members: {
-          connect: { id: userToInvite.id }
+          create: { 
+            userId: userToInvite.id,
+            role: "MEMBER"
+          }
         }
       },
       include: {
         members: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                image: true
+              }
+            }
           }
         }
       }

@@ -21,6 +21,7 @@ import { useViewStore } from "@/store/use-view-store";
 import { toast } from "sonner";
 import { Folder, ChevronDown, Users, UserPlus, FolderPlus } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
+import { ProjectSettingsModal } from "../project/project-settings-modal";
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -34,6 +35,7 @@ export function Sidebar() {
   const { activeBoardId, setActiveBoardId } = useViewStore();
   const [expandedProjects, setExpandedProjects] = useState<string[]>([]);
   const [expandedFolders, setExpandedFolders] = useState<string[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
 
   const toggleProject = (projectId: string) => {
     setExpandedProjects(prev => 
@@ -89,6 +91,8 @@ export function Sidebar() {
       description: "Novo projeto" 
     });
   };
+
+  const currentProject = projects?.find(p => p.id === selectedProjectId);
 
   const handleInvite = async (projectId: string) => {
     const email = prompt("E-mail do usuário para convidar:");
@@ -162,6 +166,13 @@ export function Sidebar() {
                       <div className="flex-1 flex items-center justify-between min-w-0">
                         <span className="font-semibold text-sm truncate">{project.title}</span>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100">
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setSelectedProjectId(project.id); }}
+                            className="p-1 hover:bg-primary/20 rounded text-primary"
+                            title="Configurações do projeto"
+                          >
+                            <Settings size={12} />
+                          </button>
                           <button 
                             onClick={(e) => { e.stopPropagation(); handleInvite(project.id); }}
                             className="p-1 hover:bg-primary/20 rounded text-primary"
@@ -369,6 +380,13 @@ export function Sidebar() {
           {!isCollapsed && <span className="font-semibold">Novo Board</span>}
         </button>
       </div>
+      {currentProject && (
+        <ProjectSettingsModal 
+          isOpen={!!selectedProjectId} 
+          onClose={() => setSelectedProjectId(null)} 
+          project={currentProject}
+        />
+      )}
     </aside>
   );
 }

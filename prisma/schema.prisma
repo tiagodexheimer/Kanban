@@ -21,9 +21,9 @@ model User {
   comments       Comment[]
   ownedProjects  Project[]  @relation("ProjectOwner")
   sessions       Session[]
-  memberBoards   Board[]    @relation("BoardMembers")
-  assignedCards  Card[]     @relation("CardAssignees")
-  memberProjects Project[]  @relation("ProjectMembers")
+  memberBoards   BoardPermission[]
+  assignedCards  Card[]            @relation("CardAssignees")
+  memberProjects ProjectMember[]
 }
 
 model Account {
@@ -60,6 +60,13 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+enum ProjectRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
 model Project {
   id          String   @id @default(uuid())
   title       String
@@ -70,7 +77,20 @@ model Project {
   boards      Board[]
   folders     Folder[]
   owner       User     @relation("ProjectOwner", fields: [ownerId], references: [id])
-  members     User[]   @relation("ProjectMembers")
+  members     ProjectMember[]
+}
+
+model ProjectMember {
+  id        String      @id @default(uuid())
+  projectId String
+  userId    String
+  role      ProjectRole @default(MEMBER)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
 }
 
 model Board {
@@ -90,7 +110,23 @@ model Board {
   columns      Column[]
   customFields CustomField[]
   tags         Tag[]
-  members      User[]        @relation("BoardMembers")
+  permissions  BoardPermission[]
+}
+
+model BoardPermission {
+  id            String   @id @default(uuid())
+  boardId       String
+  userId        String
+  canView       Boolean  @default(true)
+  canEditTasks  Boolean  @default(true)
+  canMoveTasks  Boolean  @default(true)
+  canManageBoard Boolean @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  board         Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([boardId, userId])
 }
 
 model Folder {

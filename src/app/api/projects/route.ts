@@ -14,7 +14,7 @@ export async function GET() {
       where: {
         OR: [
           { ownerId: userId },
-          { members: { some: { id: userId } } }
+          { members: { some: { userId } } }
         ]
       },
       include: {
@@ -23,11 +23,15 @@ export async function GET() {
           include: { boards: true }
         },
         members: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                image: true
+              }
+            }
           }
         },
         owner: {
@@ -66,11 +70,16 @@ export async function POST(request: Request) {
         description,
         ownerId: userId,
         members: {
-          connect: { id: userId }
+          create: { 
+            userId, 
+            role: "OWNER" 
+          }
         }
       },
       include: {
-        members: true
+        members: {
+          include: { user: true }
+        }
       }
     });
 

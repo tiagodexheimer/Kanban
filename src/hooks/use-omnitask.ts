@@ -68,11 +68,25 @@ export interface Board {
   id: string;
   title: string;
   description?: string;
-  columns: Column[];
-  tags: Tag[];
   projectId?: string;
   folderId?: string;
-  customFields?: CustomField[];
+  columns: Column[];
+  tags: Tag[];
+  customFields: CustomField[];
+  permissions: {
+    userId: string;
+    canView: boolean;
+    canEditTasks: boolean;
+    canMoveTasks: boolean;
+    canManageBoard: boolean;
+    user: User;
+  }[];
+  userPermissions?: {
+    canView: boolean;
+    canEditTasks: boolean;
+    canMoveTasks: boolean;
+    canManageBoard: boolean;
+  };
 }
 
 export interface Project {
@@ -80,10 +94,15 @@ export interface Project {
   title: string;
   description?: string;
   ownerId: string;
-  owner: User;
-  members: User[];
-  boards: Board[];
-  folders: Folder[];
+  members: {
+    id: string;
+    userId: string;
+    role: "OWNER" | "ADMIN" | "MEMBER" | "VIEWER";
+    user: User;
+  }[];
+  boards?: Board[];
+  folders?: Folder[];
+  updatedAt: string;
 }
 
 export interface Folder {
@@ -302,6 +321,45 @@ export function useUpdateCard() {
   });
 }
 
+export function useUpdateProject() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: Partial<Project> & { id: string }) => {
+      const res = await fetch(`/api/projects/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      toast.success("Projeto atualizado!");
+    }
+  });
+}
+
+export function useDeleteProject() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/projects/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to delete project");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["boards"] });
+      toast.success("Projeto excluído com sucesso!");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    }
+  });
+}
+
 export function useCreateCard() {
   const queryClient = useQueryClient();
   
@@ -436,6 +494,78 @@ export function useDeleteCard() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["board"] });
     },
+  });
+}
+
+export function useDeleteBoard() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/boards/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete board");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["boards"] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      toast.success("Quadro excluído com sucesso!");
+    }
+  });
+}
+
+export function useUpdateProjectMember() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ projectId, userId, role }: { projectId: string; userId: string; role: string }) => {
+      const res = await fetch(`/api/projects/${projectId}/members/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role }),
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      toast.success("Permissão atualizada!");
+    }
+  });
+}
+
+export function useRemoveProjectMember() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ projectId, userId }: { projectId: string; userId: string }) => {
+      await fetch(`/api/projects/${projectId}/members/${userId}`, { method: "DELETE" });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      toast.success("Membro removido!");
+    }
+  });
+}
+
+export function useUpdateBoardPermission() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ boardId, userId, ...permissions }: { 
+      boardId: string; 
+      userId: string; 
+      canView?: boolean; 
+      canEditTasks?: boolean; 
+      canMoveTasks?: boolean; 
+      canManageBoard?: boolean; 
+    }) => {
+      const res = await fetch(`/api/boards/${boardId}/permissions`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, ...permissions }),
+      });
+      return res.json();
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["board", variables.boardId] });
+      queryClient.invalidateQueries({ queryKey: ["boards"] });
+      toast.success("Permissões atualizadas!");
+    }
   });
 }
 
