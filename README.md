@@ -100,7 +100,7 @@ Inspirado na inteligência do ClickUp.
 - [x] **Subtarefas Aninhadas**: Suporte a subtarefas em múltiplos níveis. ermitir que subtarefas também tenham suas próprias subtarefas (recursividade).
 
 ### **Sprint 9: Docs & Conhecimento (Semana 9)**
-- [ ] **ClickUp Docs**: Editor de texto rico (Rich Text) para documentação interna.Um editor Rich Text (Slash commands, markdown) integrado para criar wikis e documentação de processos dentro do workspace.
+- [x] **ClickUp Docs**: Editor de texto rico (Rich Text) para documentação interna.Um editor Rich Text (Slash commands, markdown) integrado para criar wikis e documentação de processos dentro do workspace.
 - [ ] **Whiteboards (Quadros Brancos)**: Uma área para desenho livre e diagramas (usando algo como Excalidraw ou Canvas API).
 - [ ] **Menções Globais**: Uso de `@` para referenciar membros ou tarefas em comentários. Permitir que subtarefas também tenham suas próprias subtarefas (recursividade).
 

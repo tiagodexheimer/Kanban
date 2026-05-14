@@ -12,7 +12,8 @@ import {
   LayoutDashboard,
   Settings,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Book
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
@@ -53,8 +54,17 @@ export function Sidebar() {
     { icon: Star, label: "Favoritos" },
     { icon: Search, label: "Busca" },
     { icon: FolderKanban, label: "Projetos" },
+    { icon: Book, label: "Documentos", view: "docs" },
     { icon: Settings, label: "Configurações" },
   ];
+
+  const { setView, currentView } = useViewStore();
+
+  const handleNavClick = (item: any) => {
+    if (item.view) {
+      setView(item.view);
+    }
+  };
 
   const handleCreateBoard = async (projectId?: string, folderId?: string) => {
     const title = prompt("Título do novo quadro:");
@@ -125,8 +135,10 @@ export function Sidebar() {
           {navItems.map((item, idx) => (
             <button
               key={idx}
+              onClick={() => handleNavClick(item)}
               className={cn(
-                "w-full flex items-center gap-3 p-2 rounded-lg transition-colors text-muted-foreground hover:bg-accent hover:text-foreground"
+                "w-full flex items-center gap-3 p-2 rounded-lg transition-colors text-muted-foreground hover:bg-accent hover:text-foreground",
+                currentView === (item as any).view ? "bg-primary/10 text-primary font-bold" : ""
               )}
             >
               <item.icon size={20} />

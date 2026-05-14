@@ -24,6 +24,7 @@ model User {
   memberBoards   BoardPermission[]
   assignedCards  Card[]            @relation("CardAssignees")
   memberProjects ProjectMember[]
+  docs           Doc[]
 }
 
 model Account {
@@ -78,6 +79,7 @@ model Project {
   folders     Folder[]
   owner       User     @relation("ProjectOwner", fields: [ownerId], references: [id])
   members     ProjectMember[]
+  docs        Doc[]
 }
 
 model ProjectMember {
@@ -111,6 +113,7 @@ model Board {
   customFields CustomField[]
   tags         Tag[]
   permissions  BoardPermission[]
+  docs         Doc[]
 }
 
 model BoardPermission {
@@ -259,4 +262,26 @@ model ChecklistItem {
   card      Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
 
   @@index([cardId])
+}
+
+model Doc {
+  id        String   @id @default(uuid())
+  title     String
+  content   String?  @db.Text
+  parentId  String?
+  boardId   String?
+  projectId String?
+  ownerId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  parent    Doc?     @relation("SubDocs", fields: [parentId], references: [id])
+  subDocs   Doc[]    @relation("SubDocs")
+  board     Board?   @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  owner     User     @relation(fields: [ownerId], references: [id])
+
+  @@index([boardId])
+  @@index([projectId])
+  @@index([ownerId])
 }

@@ -22,6 +22,7 @@ import { DashboardView } from "./dashboard-view";
 import { ActivityLog } from "./activity-log";
 import { BoardSettingsModal } from "./board-settings-modal";
 import { History, X, Settings } from "lucide-react";
+import { DocsView } from "../docs/docs-view";
 
 export function BoardView() {
   const { data: boards, isLoading: isLoadingBoards } = useBoards();
@@ -90,70 +91,74 @@ export function BoardView() {
     return <div className="flex items-center justify-center h-64 text-muted-foreground italic">Carregando quadro...</div>;
   }
 
-  if (!board) {
-    const handleCreateFirstBoard = async () => {
-      const title = prompt("Título do seu novo quadro:");
-      if (title) {
-        createBoardMutation.mutate({ 
-          title, 
-          description: "Meu novo workspace" 
-        }, {
-          onSuccess: () => {
-            window.location.reload();
-          }
-        });
-      }
-    };
-
-    return (
-      <div className="flex flex-col items-center justify-center h-[60vh] gap-6 animate-in fade-in zoom-in duration-500">
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold text-foreground">Nenhum quadro encontrado</h2>
-          <p className="text-muted-foreground">Parece que seu workspace está vazio. Vamos começar?</p>
-        </div>
-        <button 
-          onClick={handleCreateFirstBoard}
-          className="px-8 py-3 bg-primary text-primary-foreground font-bold rounded-2xl hover:opacity-90 transition-all shadow-xl shadow-primary/20 hover:scale-105 active:scale-95"
-        >
-          Criar Meu Primeiro Quadro
-        </button>
-      </div>
-    );
-  }
+  const handleCreateFirstBoard = async () => {
+    const title = prompt("Título do seu novo quadro:");
+    if (title) {
+      createBoardMutation.mutate({ 
+        title, 
+        description: "Meu novo workspace" 
+      }, {
+        onSuccess: () => {
+          window.location.reload();
+        }
+      });
+    }
+  };
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <header className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">{board.title}</h1>
-          <p className="text-muted-foreground">{board.description || "Visualize e organize suas tarefas."}</p>
+      {currentView === "docs" ? (
+        <div className="flex-1 overflow-auto min-h-0 custom-scrollbar">
+          <DocsView boardId={boardId} />
         </div>
-        <div className="flex items-center gap-4">
+      ) : !board ? (
+        <div className="flex flex-col items-center justify-center h-[60vh] gap-6 animate-in fade-in zoom-in duration-500">
+          <div className="text-center space-y-2">
+            <h2 className="text-2xl font-bold text-foreground">Nenhum quadro encontrado</h2>
+            <p className="text-muted-foreground">Parece que seu workspace está vazio. Vamos começar?</p>
+          </div>
           <button 
-            onClick={() => setIsActivityLogOpen(!isActivityLogOpen)}
-            className={cn(
-              "p-2 rounded-xl border transition-all flex items-center gap-2",
-              isActivityLogOpen 
-                ? "bg-primary/10 border-primary text-primary" 
-                : "bg-background border-border text-muted-foreground hover:bg-accent"
-            )}
-            title="Histórico de atividades"
+            onClick={handleCreateFirstBoard}
+            className="px-8 py-3 bg-primary text-primary-foreground font-bold rounded-2xl hover:opacity-90 transition-all shadow-xl shadow-primary/20 hover:scale-105 active:scale-95"
           >
-            <History size={18} />
-            <span className="text-sm font-medium">Histórico</span>
-          </button>
-          <button 
-            onClick={() => setIsSettingsOpen(true)}
-            className="p-2 rounded-xl border border-border bg-background text-muted-foreground hover:bg-accent transition-all flex items-center gap-2"
-            title="Configurações do quadro"
-          >
-            <Settings size={18} />
-            <span className="text-sm font-medium">Configurações</span>
+            Criar Meu Primeiro Quadro
           </button>
         </div>
-      </header>
+      ) : (
+        <>
+          <header className="mb-8 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-foreground">{board.title}</h1>
+              <p className="text-muted-foreground">{board.description || "Visualize e organize suas tarefas."}</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setIsActivityLogOpen(!isActivityLogOpen)}
+                className={cn(
+                  "p-2 rounded-xl border transition-all flex items-center gap-2",
+                  isActivityLogOpen 
+                    ? "bg-primary/10 border-primary text-primary" 
+                    : "bg-background border-border text-muted-foreground hover:bg-accent"
+                )}
+                title="Histórico de atividades"
+              >
+                <History size={18} />
+                <span className="text-sm font-medium">Histórico</span>
+              </button>
+              <button 
+                onClick={() => setIsSettingsOpen(true)}
+                className="p-2 rounded-xl border border-border bg-background text-muted-foreground hover:bg-accent transition-all flex items-center gap-2"
+                title="Configurações do quadro"
+              >
+                <Settings size={18} />
+                <span className="text-sm font-medium">Configurações</span>
+              </button>
+            </div>
+          </header>
 
-      <FilterBar tags={board.tags} />
+          <FilterBar tags={board.tags} />
+        </>
+      )}
 
       <div className="flex-1 overflow-auto min-h-0 custom-scrollbar">
         {currentView === "board" && (

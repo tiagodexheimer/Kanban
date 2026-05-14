@@ -903,3 +903,89 @@ export function useUpdateCustomValue(cardId: string) {
     },
   });
 }
+
+// --- Docs Hooks ---
+
+export function useDocs(projectId?: string, boardId?: string) {
+  return useQuery<any[]>({
+    queryKey: ["docs", { projectId, boardId }],
+    queryFn: async () => {
+      const url = new URL("/api/docs", window.location.origin);
+      if (projectId) url.searchParams.append("projectId", projectId);
+      if (boardId) url.searchParams.append("boardId", boardId);
+      const res = await fetch(url.toString());
+      if (!res.ok) throw new Error("Failed to fetch docs");
+      return res.json();
+    },
+  });
+}
+
+export function useDoc(id: string) {
+  return useQuery<any>({
+    queryKey: ["doc", id],
+    queryFn: async () => {
+      const res = await fetch(`/api/docs/${id}`);
+      if (!res.ok) throw new Error("Failed to fetch doc");
+      return res.json();
+    },
+    enabled: !!id,
+  });
+}
+
+export function useCreateDoc() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: any) => {
+      const res = await fetch("/api/docs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to create doc");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["docs"] });
+      toast.success("Documento criado com sucesso!");
+    },
+    onError: (error: any) => {
+      toast.error("Erro ao criar documento: " + error.message);
+    }
+  });
+}
+
+export function useUpdateDoc() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: any) => {
+      const res = await fetch(`/api/docs/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to update doc");
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["docs"] });
+      queryClient.invalidateQueries({ queryKey: ["doc", data.id] });
+    },
+  });
+}
+
+export function useDeleteDoc() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/docs/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to delete doc");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["docs"] });
+      toast.success("Documento excluído!");
+    },
+  });
+}

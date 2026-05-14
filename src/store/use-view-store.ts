@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type ViewType = "board" | "list" | "calendar" | "dashboard";
+export type ViewType = "board" | "list" | "calendar" | "dashboard" | "docs";
 
 export interface ViewFilters {
   search: string;
