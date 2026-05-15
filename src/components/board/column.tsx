@@ -177,7 +177,12 @@ export function Column({ column, cards, onEditCard, onAddCard }: ColumnProps) {
       >
         <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
           {cards.map(card => (
-            <Card key={card.id} card={card} onClick={() => onEditCard(card.id)} />
+            <Card 
+              key={card.id} 
+              card={card} 
+              onClick={() => onEditCard(card.id)} 
+              columnColor={column.color}
+            />
           ))}
         </SortableContext>
         

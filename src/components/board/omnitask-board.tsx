@@ -239,7 +239,12 @@ export function OmnitaskBoard({
 
       {typeof document !== 'undefined' && createPortal(
         <DragOverlay>
-          {activeCard ? <Card card={activeCard} /> : null}
+          {activeCard ? (
+            <Card 
+              card={activeCard} 
+              columnColor={localColumns.find(c => c.id === activeCard.columnId)?.color} 
+            />
+          ) : null}
           {activeColumn ? (
             <Column 
               column={activeColumn} 

@@ -9,6 +9,7 @@ import { GripVertical, Calendar, CheckCircle2, ShieldAlert, Layers, Link as Link
 interface CardProps {
   card: CardType;
   onClick?: () => void;
+  columnColor?: string;
 }
 
 const priorityColors: Record<string, string> = {
@@ -18,7 +19,7 @@ const priorityColors: Record<string, string> = {
   Urgent: "bg-red-500/10 text-red-500",
 };
 
-export function Card({ card, onClick }: CardProps) {
+export function Card({ card, onClick, columnColor }: CardProps) {
   const {
     attributes,
     listeners,
@@ -49,14 +50,17 @@ export function Card({ card, onClick }: CardProps) {
   return (
     <div
       ref={setNodeRef}
-      style={style}
+      style={{
+        ...style,
+        borderLeft: `4px solid ${columnColor || 'var(--primary)'}`
+      }}
       {...attributes}
       {...listeners}
       onClick={onClick}
       className={cn(
-        "group relative bg-card border border-border p-4 rounded-xl shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing mb-3",
+        "group relative bg-card border border-border p-4 rounded-xl shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing mb-3 overflow-hidden",
         isDragging && "opacity-50 grayscale",
-        card.parentId && "ml-4 border-l-4 border-l-primary/30"
+        card.parentId && "ml-4"
       )}
     >
       {card.parentId && (
