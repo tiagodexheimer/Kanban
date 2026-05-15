@@ -989,3 +989,107 @@ export function useDeleteDoc() {
     },
   });
 }
+
+// --- Whiteboard Hooks ---
+
+export function useWhiteboards(projectId?: string, boardId?: string) {
+  return useQuery<any[]>({
+    queryKey: ["whiteboards", { projectId, boardId }],
+    queryFn: async () => {
+      const url = new URL("/api/whiteboards", window.location.origin);
+      if (projectId) url.searchParams.append("projectId", projectId);
+      if (boardId) url.searchParams.append("boardId", boardId);
+      const res = await fetch(url.toString());
+      if (!res.ok) throw new Error("Failed to fetch whiteboards");
+      return res.json();
+    },
+  });
+}
+
+export function useWhiteboard(id: string) {
+  return useQuery<any>({
+    queryKey: ["whiteboard", id],
+    queryFn: async () => {
+      const res = await fetch(`/api/whiteboards/${id}`);
+      if (!res.ok) throw new Error("Failed to fetch whiteboard");
+      return res.json();
+    },
+    enabled: !!id,
+  });
+}
+
+export function useCreateWhiteboard() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: any) => {
+      const res = await fetch("/api/whiteboards", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to create whiteboard");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["whiteboards"] });
+      toast.success("Whiteboard criado com sucesso!");
+    },
+  });
+}
+
+export function useUpdateWhiteboard() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: any) => {
+      const res = await fetch(`/api/whiteboards/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to update whiteboard");
+      return res.json();
+    },
+    onMutate: async ({ id, ...newData }) => {
+      await queryClient.cancelQueries({ queryKey: ["whiteboard", id] });
+      const previousWB = queryClient.getQueryData(["whiteboard", id]);
+      
+      if (previousWB) {
+        queryClient.setQueryData(["whiteboard", id], (old: any) => ({
+          ...old,
+          ...newData
+        }));
+      }
+      
+      return { previousWB };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousWB) {
+        queryClient.setQueryData(["whiteboard", variables.id], context.previousWB);
+      }
+    },
+    onSuccess: (data: any) => {
+      console.log("Whiteboard updated on server:", data.id, "data length:", data.data.length);
+      queryClient.invalidateQueries({ queryKey: ["whiteboards"] });
+      // We don't necessarily need to invalidate the singular one if we did optimistic update,
+      // but it's safer to keep it in sync with server.
+      queryClient.invalidateQueries({ queryKey: ["whiteboard", data.id] });
+    },
+  });
+}
+
+export function useDeleteWhiteboard() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/whiteboards/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to delete whiteboard");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["whiteboards"] });
+      toast.success("Whiteboard excluído!");
+    },
+  });
+}

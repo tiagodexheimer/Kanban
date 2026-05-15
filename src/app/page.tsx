@@ -5,10 +5,8 @@ export default function Home() {
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto bg-background p-8">
-        <div className="flex-1 min-h-0">
-          <BoardView />
-        </div>
+      <main className="flex-1 flex flex-col h-full bg-background p-0 overflow-hidden">
+        <BoardView />
       </main>
     </div>
   );

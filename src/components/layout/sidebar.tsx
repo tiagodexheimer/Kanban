@@ -13,7 +13,8 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Book
+  Book,
+  Palette
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
@@ -55,6 +56,7 @@ export function Sidebar() {
     { icon: Search, label: "Busca" },
     { icon: FolderKanban, label: "Projetos" },
     { icon: Book, label: "Documentos", view: "docs" },
+    { icon: Palette, label: "Whiteboards", view: "whiteboard" },
     { icon: Settings, label: "Configurações" },
   ];
 

@@ -23,10 +23,35 @@ import { ActivityLog } from "./activity-log";
 import { BoardSettingsModal } from "./board-settings-modal";
 import { History, X, Settings } from "lucide-react";
 import { DocsView } from "../docs/docs-view";
+import { WhiteboardView } from "../whiteboard/whiteboard-view";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { useEffect } from "react";
+import { ViewType } from "@/store/use-view-store";
 
 export function BoardView() {
   const { data: boards, isLoading: isLoadingBoards } = useBoards();
-  const { activeBoardId, currentView, filters } = useViewStore();
+  const { activeBoardId, currentView, setView, filters } = useViewStore();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Sync view from URL on mount
+  useEffect(() => {
+    const viewFromUrl = searchParams.get("view") as ViewType;
+    if (viewFromUrl && viewFromUrl !== currentView) {
+      setView(viewFromUrl);
+    }
+  }, []);
+
+  // Sync URL from view change
+  useEffect(() => {
+    const currentViewInUrl = searchParams.get("view");
+    if (currentViewInUrl !== currentView) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("view", currentView);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    }
+  }, [currentView, pathname, router, searchParams]);
   
   const boardId = activeBoardId || boards?.[0]?.id;
   const { data: board, isLoading: isLoadingBoard } = useBoard(boardId!);
@@ -107,11 +132,15 @@ export function BoardView() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {currentView === "docs" ? (
-        <div className="flex-1 overflow-auto min-h-0 custom-scrollbar">
-          <DocsView boardId={boardId} />
-        </div>
-      ) : !board ? (
+      <div className={cn("flex-1 overflow-auto min-h-0 custom-scrollbar", currentView !== "docs" && "hidden")}>
+        <DocsView boardId={boardId} />
+      </div>
+
+      <div className={cn("flex-1 flex flex-col min-h-0", currentView !== "whiteboard" && "hidden")}>
+        <WhiteboardView boardId={boardId} isActive={currentView === "whiteboard"} />
+      </div>
+
+      {currentView !== "docs" && currentView !== "whiteboard" && !board ? (
         <div className="flex flex-col items-center justify-center h-[60vh] gap-6 animate-in fade-in zoom-in duration-500">
           <div className="text-center space-y-2">
             <h2 className="text-2xl font-bold text-foreground">Nenhum quadro encontrado</h2>
@@ -160,38 +189,42 @@ export function BoardView() {
         </>
       )}
 
-      <div className="flex-1 overflow-auto min-h-0 custom-scrollbar">
-        {currentView === "board" && (
-          <OmnitaskBoard 
-            columns={filteredColumns} 
-            boardId={boardId!}
-            onEditCard={openEditModal}
-            onAddCard={openCreateModal}
-            onAddColumn={handleAddColumn}
-            onUpdateCard={updateCardMutation.mutate}
-            onUpdateColumn={updateColumnMutation.mutate}
-          />
-        )}
+      {!["docs", "whiteboard"].includes(currentView) && board && (
+        <div className="flex-1 overflow-auto min-h-0 custom-scrollbar">
+          {currentView === "board" && (
+            <div className="p-8 h-full">
+              <OmnitaskBoard 
+                columns={filteredColumns} 
+                boardId={boardId!}
+                onEditCard={openEditModal}
+                onAddCard={openCreateModal}
+                onAddColumn={handleAddColumn}
+                onUpdateCard={updateCardMutation.mutate}
+                onUpdateColumn={updateColumnMutation.mutate}
+              />
+            </div>
+          )}
 
-        {currentView === "list" && (
-          <ListView 
-            columns={filteredColumns}
-            onEditCard={openEditModal}
-            customFields={board.customFields || []}
-          />
-        )}
+          {currentView === "list" && (
+            <ListView 
+              columns={filteredColumns}
+              onEditCard={openEditModal}
+              customFields={board.customFields || []}
+            />
+          )}
 
-        {currentView === "calendar" && (
-          <CalendarView 
-            columns={filteredColumns}
-            onEditCard={openEditModal}
-          />
-        )}
+          {currentView === "calendar" && (
+            <CalendarView 
+              columns={filteredColumns}
+              onEditCard={openEditModal}
+            />
+          )}
 
-        {currentView === "dashboard" && (
-          <DashboardView boardId={boardId!} />
-        )}
-      </div>
+          {currentView === "dashboard" && (
+            <DashboardView boardId={boardId!} />
+          )}
+        </div>
+      )}
 
       {/* Activity Log Side Panel */}
       {isActivityLogOpen && (
