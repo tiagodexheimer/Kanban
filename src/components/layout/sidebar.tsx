@@ -68,6 +68,14 @@ export function Sidebar() {
     }
   };
 
+  const handleBoardClick = (boardId: string) => {
+    setActiveBoardId(boardId);
+    if (currentView === "docs" || currentView === "whiteboard") {
+      setView("board");
+    }
+  };
+
+
   const handleCreateBoard = async (projectId?: string, folderId?: string) => {
     const title = prompt("Título do novo quadro:");
     if (!title) return;
@@ -244,7 +252,7 @@ export function Sidebar() {
                               {folder.boards?.map((board) => (
                                 <button
                                   key={board.id}
-                                  onClick={() => setActiveBoardId(board.id)}
+                                  onClick={() => handleBoardClick(board.id)}
                                   className={cn(
                                     "w-full flex items-center gap-3 p-1.5 rounded-lg text-[13px] transition-all",
                                     activeBoardId === board.id 
@@ -268,7 +276,7 @@ export function Sidebar() {
                       {project.boards?.filter(b => !b.folderId).map((board) => (
                         <button
                           key={board.id}
-                          onClick={() => setActiveBoardId(board.id)}
+                          onClick={() => handleBoardClick(board.id)}
                           className={cn(
                             "w-full flex items-center gap-3 p-1.5 rounded-lg text-[13px] transition-all",
                             activeBoardId === board.id 
@@ -311,7 +319,7 @@ export function Sidebar() {
               boards?.filter(b => !b.projectId).map((board) => (
                 <button
                   key={board.id}
-                  onClick={() => setActiveBoardId(board.id)}
+                  onClick={() => handleBoardClick(board.id)}
                   className={cn(
                     "w-full flex items-center gap-3 p-2 rounded-lg transition-all",
                     activeBoardId === board.id || (!activeBoardId && boards.filter(b => !b.projectId)[0]?.id === board.id)

@@ -1,4 +1,5 @@
 "use client";
+// Trigger recompile
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import dynamic from "next/dynamic";
@@ -14,7 +15,8 @@ import { toast } from "sonner";
 import "@excalidraw/excalidraw/index.css";
 import { 
   Palette, Plus, Trash2, Search, 
-  ChevronRight, MousePointer2, Save
+  ChevronRight, MousePointer2, Save,
+  ChevronLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -187,6 +189,9 @@ export function WhiteboardView({ projectId, boardId, isActive }: WhiteboardViewP
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
+  const { data: standaloneWBs } = useWhiteboards(undefined, undefined);
+  const filteredStandalone = standaloneWBs?.filter(w => w.boardId !== boardId && w.title.toLowerCase().includes(searchTerm.toLowerCase()));
+
   const selectedWBData = whiteboards?.find(w => w.id === selectedId);
   const isActuallyLoading = isLoadingWB && !selectedWB;
   
@@ -255,35 +260,60 @@ export function WhiteboardView({ projectId, boardId, isActive }: WhiteboardViewP
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar">
-          {filteredWBs?.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <MousePointer2 className="text-muted-foreground/20 mb-4" size={48} />
-              <p className="text-xs text-muted-foreground font-medium px-4">Nenhum quadro branco</p>
+        <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
+          {/* Board Specific Section */}
+          {boardId && (
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-3 mb-2 block">Deste Quadro</span>
+              {filteredWBs?.length === 0 && (
+                <div className="px-3 py-2 text-xs text-muted-foreground italic text-center">Nenhum quadro</div>
+              )}
+              {filteredWBs?.map((wb) => (
+                <button
+                  key={wb.id}
+                  onClick={() => handleSelectWhiteboard(wb.id)}
+                  className={cn(
+                    "w-full flex items-center gap-3 p-3 rounded-xl transition-all group relative",
+                    selectedId === wb.id 
+                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25" 
+                      : "hover:bg-accent/50 text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <div className={cn(
+                    "w-2 h-2 rounded-full transition-all",
+                    selectedId === wb.id ? "bg-white animate-pulse" : "bg-primary/20"
+                  )} />
+                  <span className="text-sm font-medium truncate">{wb.title || "Sem título"}</span>
+                </button>
+              ))}
             </div>
-          ) : (
-            filteredWBs?.map((wb) => (
+          )}
+
+          {/* Standalone Section */}
+          <div className="space-y-1 mt-6">
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-3 mb-2 block">Outros Quadros</span>
+            {filteredStandalone?.length === 0 && (
+              <div className="px-3 py-2 text-xs text-muted-foreground italic text-center">Nenhum quadro</div>
+            )}
+            {filteredStandalone?.map((wb) => (
               <button
                 key={wb.id}
                 onClick={() => handleSelectWhiteboard(wb.id)}
                 className={cn(
                   "w-full flex items-center gap-3 p-3 rounded-xl transition-all group relative",
                   selectedId === wb.id 
-                    ? "bg-primary/10 text-primary shadow-sm" 
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25" 
+                    : "hover:bg-accent/50 text-muted-foreground hover:text-foreground"
                 )}
               >
-                <Palette size={18} className={cn(selectedId === wb.id ? "text-primary" : "text-muted-foreground opacity-50")} />
-                <div className="flex-1 text-left min-w-0">
-                  <p className="text-sm font-bold truncate leading-tight">{wb.title || "Sem título"}</p>
-                  <p className="text-[10px] opacity-60 truncate">
-                    {format(new Date(wb.updatedAt), "dd 'de' MMM", { locale: ptBR })}
-                  </p>
-                </div>
-                <ChevronRight size={14} className={cn("opacity-0 transition-all", selectedId === wb.id ? "opacity-100 translate-x-0" : "group-hover:opacity-100 -translate-x-2")} />
+                <div className={cn(
+                  "w-2 h-2 rounded-full transition-all",
+                  selectedId === wb.id ? "bg-white animate-pulse" : "bg-primary/20"
+                )} />
+                <span className="text-sm font-medium truncate">{wb.title || "Sem título"}</span>
               </button>
-            ))
-          )}
+            ))}
+          </div>
         </div>
       </div>
 
@@ -292,6 +322,18 @@ export function WhiteboardView({ projectId, boardId, isActive }: WhiteboardViewP
         <div className={cn("flex-1 flex flex-col", (!selectedId || (!selectedWB && !isActuallyLoading)) && "hidden")}>
           <div className="p-4 border-b border-border bg-card/30 backdrop-blur-md z-10 flex items-center justify-between">
             <div className="flex items-center gap-4 flex-1">
+              <button 
+                onClick={() => {
+                  setSelectedId(null);
+                  const params = new URLSearchParams(searchParams.toString());
+                  params.delete("wb");
+                  router.push(`${pathname}?${params.toString()}`, { scroll: false });
+                }}
+                className="p-2 hover:bg-accent rounded-xl transition-all text-muted-foreground hover:text-foreground"
+                title="Voltar para a lista"
+              >
+                <ChevronLeft size={20} />
+              </button>
               <input 
                 type="text" 
                 value={localTitle}

@@ -30,28 +30,44 @@ import { ViewType } from "@/store/use-view-store";
 
 export function BoardView() {
   const { data: boards, isLoading: isLoadingBoards } = useBoards();
-  const { activeBoardId, currentView, setView, filters } = useViewStore();
+  const { activeBoardId, setActiveBoardId, currentView, setView, filters } = useViewStore();
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
 
-  // Sync view from URL on mount
+  // Sync view and board from URL on mount/change
   useEffect(() => {
     const viewFromUrl = searchParams.get("view") as ViewType;
     if (viewFromUrl && viewFromUrl !== currentView) {
       setView(viewFromUrl);
     }
-  }, []);
+    
+    const boardFromUrl = searchParams.get("board");
+    if (boardFromUrl && boardFromUrl !== activeBoardId) {
+      setActiveBoardId(boardFromUrl);
+    }
+  }, [searchParams]);
 
-  // Sync URL from view change
+  // Sync URL from view and board changes
   useEffect(() => {
     const currentViewInUrl = searchParams.get("view");
-    if (currentViewInUrl !== currentView) {
+    const currentBoardInUrl = searchParams.get("board");
+    
+    // Only update if something actually needs to change in the URL
+    if (currentViewInUrl !== currentView || (activeBoardId && currentBoardInUrl !== activeBoardId)) {
       const params = new URLSearchParams(searchParams.toString());
-      params.set("view", currentView);
+      
+      if (currentView) params.set("view", currentView);
+      if (activeBoardId) params.set("board", activeBoardId);
+      
+      // Clean up whiteboard params if moving away from whiteboard view
+      if (currentView !== "whiteboard") {
+        params.delete("wb");
+      }
+      
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     }
-  }, [currentView, pathname, router, searchParams]);
+  }, [currentView, activeBoardId, pathname, router, searchParams]);
   
   const boardId = activeBoardId || boards?.[0]?.id;
   const { data: board, isLoading: isLoadingBoard } = useBoard(boardId!);
@@ -136,7 +152,7 @@ export function BoardView() {
         <DocsView boardId={boardId} />
       </div>
 
-      <div className={cn("flex-1 flex flex-col min-h-0", currentView !== "whiteboard" && "hidden")}>
+      <div className={cn("flex-1 flex-col min-h-0", currentView === "whiteboard" ? "flex" : "hidden")}>
         <WhiteboardView boardId={boardId} isActive={currentView === "whiteboard"} />
       </div>
 

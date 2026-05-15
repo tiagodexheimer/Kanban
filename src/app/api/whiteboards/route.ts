@@ -13,11 +13,20 @@ export async function GET(request: Request) {
     const projectId = searchParams.get("projectId");
     const boardId = searchParams.get("boardId");
 
-    const where: any = {};
-    if (projectId) where.projectId = projectId;
-    if (boardId) where.boardId = boardId;
-    if (!projectId && !boardId) {
-      where.ownerId = session.user.id;
+    const where: any = { ownerId: session.user.id };
+    
+    if (projectId) {
+      where.projectId = projectId;
+    }
+    
+    if (boardId) {
+      where.boardId = boardId;
+    }
+
+    // If we specifically want standalone whiteboards (not linked to project or board)
+    if (searchParams.get("standalone") === "true") {
+      where.projectId = null;
+      where.boardId = null;
     }
 
     if (!prisma.whiteboard) {
