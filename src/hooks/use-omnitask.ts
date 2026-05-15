@@ -438,6 +438,7 @@ export function useCreateCard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["board"] });
       queryClient.invalidateQueries({ queryKey: ["boards"] });
+      queryClient.invalidateQueries({ queryKey: ["board-stats"] });
       toast.success("Tarefa criada com sucesso!");
     },
     onError: () => {
@@ -902,6 +903,7 @@ export function useUpdateCustomValue(cardId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["board"] });
+      queryClient.invalidateQueries({ queryKey: ["board-stats"] });
     },
   });
 }

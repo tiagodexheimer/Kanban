@@ -5,6 +5,7 @@ import { Search, LayoutGrid, List, Calendar, Filter, X, ChevronDown, BarChart3 }
 import { useViewStore, ViewType } from "@/store/use-view-store";
 import { Tag } from "@/hooks/use-omnitask";
 import { cn } from "@/lib/utils";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 interface FilterBarProps {
   tags: Tag[];
@@ -21,6 +22,17 @@ export function FilterBar({ tags }: FilterBarProps) {
     resetFilters 
   } = useViewStore();
 
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
+  const handleViewChange = (view: ViewType) => {
+    setView(view);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", view);
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
   const priorities = ["Low", "Medium", "High", "Urgent"];
   const priorityLabels: Record<string, string> = {
     Low: "Baixa",
@@ -31,13 +43,21 @@ export function FilterBar({ tags }: FilterBarProps) {
 
   const hasActiveFilters = filters.search !== "" || filters.priorities.length > 0 || filters.tags.length > 0;
 
+  // Sync store view with URL tab on mount or tab change
+  React.useEffect(() => {
+    const tab = searchParams.get("tab") as ViewType;
+    if (tab && tab !== currentView) {
+      setView(tab);
+    }
+  }, [searchParams, currentView, setView]);
+
   return (
     <div className="flex flex-col gap-4 mb-6 animate-in fade-in slide-in-from-top-4 duration-500">
       <div className="flex items-center justify-between gap-4">
         {/* View Switcher */}
         <div className="flex p-1 bg-secondary/50 rounded-xl backdrop-blur-sm border border-border/50">
           <button
-            onClick={() => setView("board")}
+            onClick={() => handleViewChange("board")}
             className={cn(
               "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
               currentView === "board" 
@@ -49,7 +69,7 @@ export function FilterBar({ tags }: FilterBarProps) {
             Quadro
           </button>
           <button
-            onClick={() => setView("list")}
+            onClick={() => handleViewChange("list")}
             className={cn(
               "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
               currentView === "list" 
@@ -61,7 +81,7 @@ export function FilterBar({ tags }: FilterBarProps) {
             Lista
           </button>
           <button
-            onClick={() => setView("calendar")}
+            onClick={() => handleViewChange("calendar")}
             className={cn(
               "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
               currentView === "calendar" 
@@ -73,7 +93,7 @@ export function FilterBar({ tags }: FilterBarProps) {
             Calendário
           </button>
           <button
-            onClick={() => setView("dashboard")}
+            onClick={() => handleViewChange("dashboard")}
             className={cn(
               "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
               currentView === "dashboard" 

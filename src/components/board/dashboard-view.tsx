@@ -122,16 +122,19 @@ export function DashboardView({ boardId }: DashboardViewProps) {
                 />
                 <Legend iconType="circle" wrapperStyle={{ paddingTop: "20px" }} />
                 <Area 
-                  type="monotone" 
+                  type="linear" 
                   dataKey="remaining" 
                   name="Restante"
                   stroke="var(--primary)" 
                   strokeWidth={3}
                   fillOpacity={1} 
                   fill="url(#colorRemaining)" 
+                  dot={{ r: 4, fill: "var(--primary)", strokeWidth: 2, stroke: "var(--background)" }}
+                  activeDot={{ r: 6 }}
+                  connectNulls={true}
                 />
                 <Line 
-                  type="monotone" 
+                  type="linear" 
                   dataKey="ideal" 
                   name="Ideal"
                   stroke="var(--muted-foreground)" 

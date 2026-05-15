@@ -2,7 +2,7 @@ import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { subDays, startOfDay, endOfDay, format, isWithinInterval } from "date-fns";
+import { subDays, startOfDay, endOfDay, format, isWithinInterval, differenceInDays } from "date-fns";
 
 export async function GET(
   request: Request,
@@ -41,22 +41,27 @@ export async function GET(
       { name: "Urgente", value: allCards.filter(c => c.priority === "Urgent").length },
     ];
 
-    // 3. Burn-down Data (Dynamic range based on due dates)
-    const allCardsWithDates = allCards.filter(c => c.dueDate);
-    const maxDueDate = allCardsWithDates.length > 0 
-      ? new Date(Math.max(...allCardsWithDates.map(c => new Date(c.dueDate!).getTime())))
-      : subDays(new Date(), -7); // Fallback to 7 days in future
+    // 3. Burn-down Data (Dynamic range based on board history)
+    const allCardsByCreation = allCards.length > 0 
+      ? [...allCards].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+      : [];
     
-    // We'll show from 7 days ago until the last due date (at least today + 7 days)
-    const startDate = startOfDay(subDays(new Date(), 7));
+    const earliestTaskDate = allCardsByCreation.length > 0 
+      ? allCardsByCreation[0].createdAt 
+      : subDays(new Date(), 7);
+
+    const maxDueDate = allCards.filter(c => c.dueDate).length > 0 
+      ? new Date(Math.max(...allCards.filter(c => c.dueDate).map(c => new Date(c.dueDate!).getTime())))
+      : subDays(new Date(), -7); 
+    
+    const startDate = startOfDay(earliestTaskDate);
     const endDate = endOfDay(maxDueDate > new Date() ? maxDueDate : subDays(new Date(), -7));
     
     const burnDownData = [];
     const productivityData = [];
     
     // Calculate total number of days
-    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffDays = Math.max(1, differenceInDays(endDate, startDate));
     
     const doneColumn = board.columns.find(col => col.title.toLowerCase() === "done" || col.title.toLowerCase() === "concluído");
 
@@ -77,8 +82,9 @@ export async function GET(
       
       burnDownData.push({
         date: format(date, "dd/MM"),
-        remaining: dayEnd > new Date() ? null : Math.max(0, totalCreatedUntilNow - totalDoneUntilNow),
-        ideal: Math.round(idealRemaining)
+        // Only show remaining tasks for days that have already passed or for today
+        remaining: dayStart > new Date() ? null : Math.max(0, totalCreatedUntilNow - totalDoneUntilNow),
+        ideal: idealRemaining
       });
 
       // Productivity (only for past and today)

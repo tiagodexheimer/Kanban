@@ -9,7 +9,7 @@ import { AssigneeSelector } from "./assignee-selector";
 import { CommentSection } from "./comment-section";
 import { ActivityLog } from "./activity-log";
 import { CustomFieldsEditor } from "./custom-fields-editor";
-import { Calendar, Users, History, Link as LinkIcon, Layers } from "lucide-react";
+import { Calendar, Users, History, Link as LinkIcon, Layers, Clock } from "lucide-react";
 import { SubtaskEditor } from "./subtask-editor";
 import { DependencyEditor } from "./dependency-editor";
 import { cn } from "@/lib/utils";
@@ -281,6 +281,16 @@ function CardForm({ card, columnId, onClose, boardTags, boardId, projectId, boar
                     <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-hover:text-primary transition-colors" />
                   </div>
                 </div>
+
+                {card && (
+                  <div>
+                    <label className="block text-[10px] font-bold text-muted-foreground uppercase mb-1.5 ml-1">Criada em</label>
+                    <div className="bg-card/30 border border-border/30 rounded-xl p-2.5 text-[11px] text-muted-foreground font-medium flex items-center gap-2">
+                      <Clock size={12} />
+                      {new Date(card.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
