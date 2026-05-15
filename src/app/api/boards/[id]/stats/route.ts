@@ -57,8 +57,8 @@ export async function GET(
     const startDate = startOfDay(earliestTaskDate);
     const endDate = endOfDay(maxDueDate > new Date() ? maxDueDate : subDays(new Date(), -7));
     
-    const burnDownData = [];
-    const productivityData = [];
+    const burnDownData: any[] = [];
+    const productivityData: any[] = [];
     
     const days = eachDayOfInterval({ start: startDate, end: endDate });
     const totalDays = days.length - 1;
