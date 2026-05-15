@@ -97,6 +97,7 @@ export interface Project {
   title: string;
   description?: string;
   ownerId: string;
+  owner: User;
   members: {
     id: string;
     userId: string;

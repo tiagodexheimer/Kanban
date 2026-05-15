@@ -85,18 +85,20 @@ export async function GET(
     const userPermission = board.permissions[0];
     const projectMember = board.project?.members.find((m: any) => m.user.id === userId);
     
-    // Project roles that grant full board access
+    // Project roles and membership
+    const isProjectMember = !!projectMember;
     const isProjectAdmin = projectMember?.role === "OWNER" || projectMember?.role === "ADMIN";
+    const isProjectRegularMember = projectMember?.role === "MEMBER";
 
-    if (!isOwner && !isProjectAdmin && !userPermission?.canView) {
+    if (!isOwner && !isProjectAdmin && !isProjectMember && !userPermission?.canView) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // Add user-specific permission info to the response
     const permissions = {
-      canView: isOwner || isProjectAdmin || !!userPermission?.canView,
-      canEditTasks: isOwner || isProjectAdmin || !!userPermission?.canEditTasks,
-      canMoveTasks: isOwner || isProjectAdmin || !!userPermission?.canMoveTasks,
+      canView: isOwner || isProjectAdmin || isProjectMember || !!userPermission?.canView,
+      canEditTasks: isOwner || isProjectAdmin || isProjectRegularMember || !!userPermission?.canEditTasks,
+      canMoveTasks: isOwner || isProjectAdmin || isProjectRegularMember || !!userPermission?.canMoveTasks,
       canManageBoard: isOwner || isProjectAdmin || !!userPermission?.canManageBoard,
     };
 

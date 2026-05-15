@@ -93,7 +93,24 @@ function CardForm({ card, columnId, onClose, boardTags, boardId, projectId, boar
   const [activeTab, setActiveTab] = useState<"geral" | "historico">("geral");
 
   const project = projects?.find(p => p.id === projectId);
-  const projectMembers = project?.members.map(m => m.user) || [];
+  
+  // Combine owner and members into a single list of users
+  const projectMembers = React.useMemo(() => {
+    if (!project) return [];
+    
+    const members = project.members.map(m => m.user);
+    const owner = project.owner;
+    
+    // Check if owner is already in members
+    const isOwnerInMembers = members.some(m => m.id === owner.id);
+    
+    if (!isOwnerInMembers && owner) {
+      // Add owner to members list (ensure they have email if needed, though id/name/image is usually enough for display)
+      return [owner, ...members];
+    }
+    
+    return members;
+  }, [project]);
 
   const allCards = board?.columns.flatMap((c: any) => c.cards) || [];
   const availableParentCards = allCards.filter((c: any) => c.id !== card?.id && !c.parentId);
