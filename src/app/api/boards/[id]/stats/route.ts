@@ -2,7 +2,7 @@ import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { subDays, startOfDay, endOfDay, format, isWithinInterval, differenceInDays } from "date-fns";
+import { subDays, startOfDay, endOfDay, format, isWithinInterval, differenceInDays, eachDayOfInterval } from "date-fns";
 
 export async function GET(
   request: Request,
@@ -60,13 +60,11 @@ export async function GET(
     const burnDownData = [];
     const productivityData = [];
     
-    // Calculate total number of days
-    const diffDays = Math.max(1, differenceInDays(endDate, startDate));
-    
+    const days = eachDayOfInterval({ start: startDate, end: endDate });
+    const totalDays = days.length - 1;
     const doneColumn = board.columns.find(col => col.title.toLowerCase() === "done" || col.title.toLowerCase() === "concluído");
 
-    for (let i = 0; i <= diffDays; i++) {
-      const date = subDays(startDate, -i);
+    days.forEach((date, i) => {
       const dayEnd = endOfDay(date);
       const dayStart = startOfDay(date);
 
@@ -78,7 +76,10 @@ export async function GET(
       ).length;
 
       // Ideal line: A straight line from total tasks to zero
-      const idealRemaining = Math.max(0, allCards.length - (allCards.length / diffDays) * i);
+      // totalDays is the divisor to ensure we hit 0 on the last day
+      const idealRemaining = totalDays > 0 
+        ? Math.max(0, allCards.length - (allCards.length / totalDays) * i)
+        : 0;
       
       burnDownData.push({
         date: format(date, "dd/MM"),
@@ -100,7 +101,7 @@ export async function GET(
           completed: completedCount
         });
       }
-    }
+    });
 
     return NextResponse.json({
       statusDistribution,

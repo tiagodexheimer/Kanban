@@ -543,6 +543,7 @@ export function useDeleteCard() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["board"] });
+      queryClient.invalidateQueries({ queryKey: ["board-stats"] });
     },
   });
 }
@@ -676,6 +677,7 @@ export function useUpdateColumn() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["board"] });
+      queryClient.invalidateQueries({ queryKey: ["board-stats"] });
     },
   });
 }
