@@ -96,7 +96,29 @@ export function OmnitaskBoard({
 
     const overColumnId = overCard ? overCard.columnId : overId;
 
-    if (activeCard.columnId !== overColumnId) {
+    if (activeCard.columnId === overColumnId) {
+      setLocalColumns(prev => {
+        const col = prev.find(c => c.id === overColumnId);
+        if (!col) return prev;
+
+        const oldIndex = col.cards.findIndex(c => c.id === activeId);
+        const newIndex = col.cards.findIndex(c => c.id === overId);
+
+        if (oldIndex === newIndex) return prev;
+
+        return prev.map(c => {
+          if (c.id === overColumnId) {
+            const newCards = arrayMove(col.cards, oldIndex, newIndex);
+            // Update position property locally for all cards in this column
+            return { 
+              ...c, 
+              cards: newCards.map((card, index) => ({ ...card, position: index }))
+            };
+          }
+          return c;
+        });
+      });
+    } else {
       setLocalColumns(prev => {
         const activeCol = prev.find(c => c.id === activeCard.columnId);
         const overCol = prev.find(c => c.id === overColumnId);
@@ -116,8 +138,18 @@ export function OmnitaskBoard({
         overCards.splice(overIndex, 0, newCard);
 
         return prev.map(c => {
-          if (c.id === activeCard.columnId) return { ...c, cards: activeCards };
-          if (c.id === overColumnId) return { ...c, cards: overCards };
+          if (c.id === activeCard.columnId) {
+            return { 
+              ...c, 
+              cards: activeCards.map((card, index) => ({ ...card, position: index }))
+            };
+          }
+          if (c.id === overColumnId) {
+            return { 
+              ...c, 
+              cards: overCards.map((card, index) => ({ ...card, position: index }))
+            };
+          }
           return c;
         });
       });
@@ -154,12 +186,17 @@ export function OmnitaskBoard({
       const overCard = localColumns.flatMap(c => c.cards).find(c => c.id === overId);
 
       if (activeCard) {
-        // Sync the final position to server
-        onUpdateCard({ 
-          id: activeId, 
-          columnId: activeCard.columnId, 
-          position: activeCard.position 
-        });
+        const activeColumn = localColumns.find(c => c.id === activeCard.columnId);
+        if (activeColumn) {
+          // Update all cards in the column to ensure consistent positions
+          activeColumn.cards.forEach((card, index) => {
+            onUpdateCard({ 
+              id: card.id, 
+              columnId: card.columnId, 
+              position: index 
+            });
+          });
+        }
       }
     }
 
