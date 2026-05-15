@@ -61,7 +61,7 @@ export function Sidebar() {
     { icon: FolderKanban, label: "Projetos", path: activeBoardId ? `/boards/${activeBoardId}` : `/` },
     { icon: Book, label: "Documentos", path: `/docs` },
     { icon: Palette, label: "Whiteboards", path: activeBoardId ? `/boards/${activeBoardId}/whiteboard` : `/whiteboards` },
-    { icon: Settings, label: "Configurações" },
+    { icon: Settings, label: "Configurações", path: "/settings" },
   ];
 
   const handleNavClick = (item: any) => {

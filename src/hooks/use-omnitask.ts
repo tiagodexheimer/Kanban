@@ -1095,3 +1095,28 @@ export function useDeleteWhiteboard() {
     },
   });
 }
+
+export function useUpdateProfile() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { name?: string; email?: string; password?: string }) => {
+      const res = await fetch("/api/user/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to update profile");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success("Perfil atualizado com sucesso!");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    }
+  });
+}
+

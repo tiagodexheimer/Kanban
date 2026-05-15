@@ -14,6 +14,7 @@ export function CommentSection({ cardId, board }: CommentSectionProps) {
   const { data: comments, isLoading } = useComments(cardId);
   const createCommentMutation = useCreateComment();
   const [text, setText] = useState("");
+  const [selectedMentions, setSelectedMentions] = useState<{name: string, id: string, type: string}[]>([]);
   
   // Mentions State
   const [showMentions, setShowMentions] = useState(false);
@@ -86,8 +87,15 @@ export function CommentSection({ cardId, board }: CommentSectionProps) {
     const lastAtPos = textBeforeCursor.lastIndexOf("@");
     const textAfterCursor = text.slice(cursorPos);
     
-    const mentionText = `@${mention.name} `;
+    // Use a zero-width space as a hidden marker for our submit logic
+    const mentionText = `@${mention.name}\u200B `;
     const newText = text.slice(0, lastAtPos) + mentionText + textAfterCursor;
+    
+    setSelectedMentions(prev => [...prev, { 
+      name: mention.name, 
+      id: mention.id, 
+      type: mention.type 
+    }]);
     
     setText(newText);
     setShowMentions(false);
@@ -133,8 +141,20 @@ export function CommentSection({ cardId, board }: CommentSectionProps) {
     }
     if (!text.trim()) return;
 
-    createCommentMutation.mutate({ cardId, text }, {
-      onSuccess: () => setText("")
+    // Process text to replace marked mentions with their ID-based counterparts
+    let processedText = text;
+    selectedMentions.forEach(m => {
+      const typeKey = m.type === "user" ? "u" : "t";
+      const token = `@[${m.name}](${typeKey}:${m.id})`;
+      // Replace the FIRST occurrence of the name + marker
+      processedText = processedText.replace(`@${m.name}\u200B`, token);
+    });
+
+    createCommentMutation.mutate({ cardId, text: processedText }, {
+      onSuccess: () => {
+        setText("");
+        setSelectedMentions([]);
+      }
     });
   };
 
@@ -142,29 +162,44 @@ export function CommentSection({ cardId, board }: CommentSectionProps) {
   const renderCommentText = (content: string) => {
     if (!content) return null;
 
-    // First, find all possible mention strings (longest first to avoid partial matches)
-    const allMentionables = [
-      ...users.map((u: any) => ({ name: u.name, type: "user" as const })),
-      ...tasks.map((t: any) => ({ name: t.title, type: (t.parentId ? "subtask" : "task") as "subtask" | "task" }))
-    ]
-      .filter((item: any) => !!item.name)
-      .sort((a: any, b: any) => b.name.length - a.name.length);
-
-    // If no mentionables, just return text
-    if (allMentionables.length === 0) return content;
-
-    // Create a regex that matches @ followed by any of the mentionable names
-    const escapedNames = allMentionables.map((m: any) => 
-      m.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-    );
-    const regex = new RegExp(`(@(?:${escapedNames.join("|")}))`, "g");
-
-    const parts = content.split(regex);
+    // Support both new format @[Name](type:id) and old format @Name
+    const parts = content.split(/(@\[[^\]]+\]\([ut]:[^)]+\)|@\S+)/g);
     
     return parts.map((part, i) => {
-      if (part.startsWith("@")) {
+      // New format handling
+      if (part.startsWith("@[")) {
+        const match = part.match(/@\[([^\]]+)\]\(([ut]):([^)]+)\)/);
+        if (match) {
+          const [_, oldName, type, id] = match;
+          const isUser = type === "u";
+          
+          const actualItem = isUser 
+            ? users.find((u: any) => u.id === id)
+            : tasks.find((t: any) => t.id === id);
+          
+          const displayName = actualItem ? (actualItem.name || (actualItem as any).title) : oldName;
+          const displayType = actualItem 
+            ? (isUser ? "user" : ((actualItem as any).parentId ? "subtask" : "task"))
+            : (isUser ? "user" : "task");
+
+          return (
+            <span key={i} className="inline-flex items-center gap-1 text-primary font-bold bg-primary/5 px-1.5 py-0.5 rounded-md leading-none align-middle">
+              {displayType === "user" ? <UserIcon size={12} className="shrink-0" /> : 
+               displayType === "subtask" ? <Layers size={12} className="shrink-0" /> : 
+               <CheckCircle2 size={12} className="shrink-0" />}
+              <span className="translate-y-[0.5px]">@{displayName}</span>
+            </span>
+          );
+        }
+      }
+
+      // Old format fallback handling
+      if (part.startsWith("@") && !part.startsWith("@[")) {
         const nameOnly = part.slice(1);
-        const mentionable = allMentionables.find(m => m.name === nameOnly);
+        const mentionable = [
+          ...users.map((u: any) => ({ name: u.name, type: "user" as const })),
+          ...tasks.map((t: any) => ({ name: (t as any).title, type: ((t as any).parentId ? "subtask" : "task") as "subtask" | "task" }))
+        ].find(m => m.name === nameOnly);
         
         if (mentionable) {
           return (
@@ -177,6 +212,7 @@ export function CommentSection({ cardId, board }: CommentSectionProps) {
           );
         }
       }
+
       return part;
     });
   };
