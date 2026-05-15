@@ -14,18 +14,22 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
+import { useRouter } from "next/navigation";
+
 interface DocsViewProps {
   projectId?: string;
   boardId?: string;
+  docId?: string;
 }
 
-export function DocsView({ projectId, boardId }: DocsViewProps) {
+export function DocsView({ projectId, boardId, docId }: DocsViewProps) {
   const { data: docs, isLoading } = useDocs(projectId, boardId);
   const createDocMutation = useCreateDoc();
   const updateDocMutation = useUpdateDoc();
   const deleteDocMutation = useDeleteDoc();
 
-  const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
+  const router = useRouter();
+  const [selectedDocId, setSelectedDocId] = useState<string | null>(docId || null);
   const [localTitle, setLocalTitle] = useState("");
   const [localContent, setLocalContent] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -34,13 +38,17 @@ export function DocsView({ projectId, boardId }: DocsViewProps) {
   const selectedDoc = docs?.find(d => d.id === selectedDocId);
 
   useEffect(() => {
+    if (docId) {
+      setSelectedDocId(docId);
+    }
+  }, [docId]);
+
+  useEffect(() => {
     if (selectedDoc) {
       setLocalTitle(selectedDoc.title);
       setLocalContent(selectedDoc.content || "");
-    } else if (docs && docs.length > 0 && !selectedDocId) {
-      setSelectedDocId(docs[0].id);
     }
-  }, [selectedDoc, docs, selectedDocId]);
+  }, [selectedDoc]);
 
   // Auto-save logic
   useEffect(() => {
@@ -80,7 +88,7 @@ export function DocsView({ projectId, boardId }: DocsViewProps) {
       boardId: cleanBoardId
     }, {
       onSuccess: (data) => {
-        setSelectedDocId(data.id);
+        router.push(`/docs/${data.id}`);
       },
       onError: (error: any) => {
         console.error("Create doc error:", error);
@@ -141,7 +149,7 @@ export function DocsView({ projectId, boardId }: DocsViewProps) {
             filteredDocs?.map((doc) => (
               <button
                 key={doc.id}
-                onClick={() => setSelectedDocId(doc.id)}
+                onClick={() => router.push(`/docs/${doc.id}`)}
                 className={cn(
                   "w-full flex items-center gap-3 p-3 rounded-xl transition-all group relative",
                   selectedDocId === doc.id 
@@ -212,7 +220,7 @@ export function DocsView({ projectId, boardId }: DocsViewProps) {
                   onClick={() => {
                     if (confirm("Deseja realmente excluir este documento?")) {
                       deleteDocMutation.mutate(selectedDoc.id, {
-                        onSuccess: () => setSelectedDocId(null)
+                        onSuccess: () => router.push('/docs')
                       });
                     }
                   }}

@@ -31,16 +31,24 @@ const Excalidraw = dynamic(
 interface WhiteboardViewProps {
   projectId?: string;
   boardId?: string;
-  isActive?: boolean;
+  whiteboardId?: string;
 }
 
-export function WhiteboardView({ projectId, boardId, isActive }: WhiteboardViewProps) {
+export function WhiteboardView({ projectId, boardId, whiteboardId }: WhiteboardViewProps) {
   const { data: whiteboards, isLoading } = useWhiteboards(projectId, boardId);
   const createMutation = useCreateWhiteboard();
   const updateMutation = useUpdateWhiteboard();
   const deleteMutation = useDeleteWhiteboard();
 
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(whiteboardId || null);
+  
+  // Sync selectedId when whiteboardId prop changes
+  useEffect(() => {
+    if (whiteboardId) {
+      setSelectedId(whiteboardId);
+    }
+  }, [whiteboardId]);
+
   const { data: selectedWB, isLoading: isLoadingWB } = useWhiteboard(selectedId!);
   const [localTitle, setLocalTitle] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -57,22 +65,7 @@ export function WhiteboardView({ projectId, boardId, isActive }: WhiteboardViewP
   const router = useRouter();
   const pathname = usePathname();
 
-  // Sync state from URL (handles direct links and browser back/forward buttons)
-  useEffect(() => {
-    if (!isActive) return;
-    const wbIdFromUrl = searchParams.get("wb");
-    
-    if (wbIdFromUrl && wbIdFromUrl !== selectedId) {
-      setSelectedId(wbIdFromUrl);
-    } else if (!wbIdFromUrl && !selectedId && whiteboards && whiteboards.length > 0) {
-      // Auto-select first whiteboard if none is selected
-      const firstId = whiteboards[0].id;
-      setSelectedId(firstId);
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("wb", firstId);
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-    }
-  }, [isActive, searchParams, selectedId, whiteboards, pathname, router]);
+  // Redirection is now handled by the page component, we just accept the prop
 
   // Scene restoration and state sync
   useEffect(() => {
@@ -174,19 +167,21 @@ export function WhiteboardView({ projectId, boardId, isActive }: WhiteboardViewP
           });
         }
         
-        setSelectedId(data.id);
-        const params = new URLSearchParams(searchParams.toString());
-        params.set("wb", data.id);
-        router.push(`${pathname}?${params.toString()}`, { scroll: false });
+        if (boardId) {
+          router.push(`/boards/${boardId}/whiteboard/${data.id}`);
+        } else {
+          router.push(`/whiteboards/${data.id}`);
+        }
       }
     });
   };
 
   const handleSelectWhiteboard = (id: string) => {
-    setSelectedId(id);
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("wb", id);
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    if (boardId) {
+      router.push(`/boards/${boardId}/whiteboard/${id}`);
+    } else {
+      router.push(`/whiteboards/${id}`);
+    }
   };
 
   const { data: standaloneWBs } = useWhiteboards(undefined, undefined);

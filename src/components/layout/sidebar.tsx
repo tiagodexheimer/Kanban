@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
 import { 
   Star,
   Search,
@@ -51,28 +52,26 @@ export function Sidebar() {
     );
   };
 
+  const router = useRouter();
+  const pathname = usePathname();
+
   const navItems = [
     { icon: Star, label: "Favoritos" },
     { icon: Search, label: "Busca" },
-    { icon: FolderKanban, label: "Projetos" },
-    { icon: Book, label: "Documentos", view: "docs" },
-    { icon: Palette, label: "Whiteboards", view: "whiteboard" },
+    { icon: FolderKanban, label: "Projetos", path: activeBoardId ? `/boards/${activeBoardId}` : `/` },
+    { icon: Book, label: "Documentos", path: `/docs` },
+    { icon: Palette, label: "Whiteboards", path: activeBoardId ? `/boards/${activeBoardId}/whiteboard` : `/whiteboards` },
     { icon: Settings, label: "Configurações" },
   ];
 
-  const { setView, currentView } = useViewStore();
-
   const handleNavClick = (item: any) => {
-    if (item.view) {
-      setView(item.view);
+    if (item.path) {
+      router.push(item.path);
     }
   };
 
   const handleBoardClick = (boardId: string) => {
-    setActiveBoardId(boardId);
-    if (currentView === "docs" || currentView === "whiteboard") {
-      setView("board");
-    }
+    router.push(`/boards/${boardId}`);
   };
 
 
@@ -87,7 +86,7 @@ export function Sidebar() {
       folderId
     }, {
       onSuccess: (data) => {
-        setActiveBoardId(data.id);
+        router.push(`/boards/${data.id}`);
       }
     });
   };
@@ -148,7 +147,7 @@ export function Sidebar() {
               onClick={() => handleNavClick(item)}
               className={cn(
                 "w-full flex items-center gap-3 p-2 rounded-lg transition-colors text-muted-foreground hover:bg-accent hover:text-foreground",
-                currentView === (item as any).view ? "bg-primary/10 text-primary font-bold" : ""
+                item.path && pathname.startsWith(item.path) && item.path !== "/" ? "bg-primary/10 text-primary font-bold" : ""
               )}
             >
               <item.icon size={20} />
