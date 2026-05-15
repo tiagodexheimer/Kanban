@@ -75,17 +75,55 @@ export async function GET(
         c.updatedAt <= dayEnd
       ).length;
 
-      // Ideal line: A straight line from total tasks to zero
-      // totalDays is the divisor to ensure we hit 0 on the last day
-      const idealRemaining = totalDays > 0 
-        ? Math.max(0, allCards.length - (allCards.length / totalDays) * i)
-        : 0;
+      // Ideal line: Piecewise linear based on deadlines
+      // We want to interpolate between (startDate, total) and each deadline point.
+      const milestones = [
+        { date: startDate.getTime(), remaining: allCards.length },
+        ...allCards
+          .filter(c => c.dueDate)
+          .map(c => ({ date: endOfDay(new Date(c.dueDate!)).getTime(), id: c.id }))
+          .sort((a, b) => a.date - b.date)
+          .reduce((acc: { date: number; remaining: number }[], curr) => {
+            // Group by date and subtract counts
+            const last = acc[acc.length - 1];
+            if (last && last.date === curr.date) {
+              last.remaining -= 1;
+            } else {
+              acc.push({ date: curr.date, remaining: (last?.remaining ?? allCards.length) - 1 });
+            }
+            return acc;
+          }, [])
+      ];
+
+      // Ensure it ends at 0 on the absolute end date
+      const lastMilestone = milestones[milestones.length - 1];
+      if (lastMilestone && lastMilestone.date < endDate.getTime()) {
+        milestones.push({ date: endDate.getTime(), remaining: 0 });
+      } else if (!lastMilestone) {
+        milestones.push({ date: endDate.getTime(), remaining: 0 });
+      }
+
+      // Find the two milestones surrounding the current date and interpolate
+      const nowTime = date.getTime();
+      let idealRemaining = 0;
+      
+      for (let j = 0; j < milestones.length - 1; j++) {
+        const m1 = milestones[j];
+        const m2 = milestones[j+1];
+        if (nowTime >= m1.date && nowTime <= m2.date) {
+          const ratio = (nowTime - m1.date) / (m2.date - m1.date);
+          idealRemaining = m1.remaining - (m1.remaining - m2.remaining) * ratio;
+          break;
+        } else if (nowTime > m2.date) {
+          idealRemaining = m2.remaining;
+        }
+      }
       
       burnDownData.push({
         date: format(date, "dd/MM"),
         // Only show remaining tasks for days that have already passed or for today
         remaining: dayStart > new Date() ? null : Math.max(0, totalCreatedUntilNow - totalDoneUntilNow),
-        ideal: idealRemaining
+        ideal: Number(idealRemaining.toFixed(2))
       });
 
       // Productivity (only for past and today)
