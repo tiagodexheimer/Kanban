@@ -71,8 +71,10 @@ export interface Board {
   projectId?: string;
   folderId?: string;
   columns: Column[];
+  allCards?: { id: string; title: string; parentId?: string | null }[];
   tags: Tag[];
   customFields: CustomField[];
+  owner?: User;
   permissions: {
     userId: string;
     canView: boolean;

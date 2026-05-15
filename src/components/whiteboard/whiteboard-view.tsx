@@ -55,7 +55,7 @@ export function WhiteboardView({ projectId, boardId, whiteboardId }: WhiteboardV
   const [searchTerm, setSearchTerm] = useState("");
   const [excalidrawAPI, setExcalidrawAPI] = useState<any>(null);
   
-  const elementsRef = useRef<any[]>([]);
+  const elementsRef = useRef<readonly any[]>([]);
   const appStateRef = useRef<any>({});
   const isUpdatingSceneRef = useRef(false);
   const lastLoadedIdRef = useRef<string | null>(null);
@@ -96,7 +96,7 @@ export function WhiteboardView({ projectId, boardId, whiteboardId }: WhiteboardV
   // Auto-save logic
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleCanvasChange = (newElements: any[], newAppState: any) => {
+  const handleCanvasChange = (newElements: readonly any[], newAppState: any) => {
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     
     // Prevent saves before we've even finished loading the initial state
@@ -385,9 +385,9 @@ export function WhiteboardView({ projectId, boardId, whiteboardId }: WhiteboardV
               <div key={selectedId} className="absolute inset-0 overflow-hidden">
                 <Excalidraw 
                   excalidrawAPI={(api) => setExcalidrawAPI(api)}
-                  onChange={handleCanvasChange}
+                  onChange={handleCanvasChange as any}
                   langCode="pt-BR"
-                  initialData={initialData}
+                  initialData={initialData as any}
                 />
               </div>
             )}

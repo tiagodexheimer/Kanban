@@ -12,12 +12,13 @@ export async function GET(request: Request) {
     const projectId = searchParams.get("projectId");
     const boardId = searchParams.get("boardId");
 
+    const userId = (session.user as any).id;
     const where: any = {};
     if (projectId) where.projectId = projectId;
     if (boardId) where.boardId = boardId;
     if (!projectId && !boardId) {
       // If no context, return user's own docs
-      where.ownerId = session.user.id;
+      where.ownerId = userId;
     }
 
     if (!prisma.doc) {
@@ -56,7 +57,8 @@ export async function POST(request: Request) {
 
     if (!title) return NextResponse.json({ error: "Title is required" }, { status: 400 });
 
-    console.log("Creating doc with data:", { title, ownerId: session.user.id });
+    const userId = (session.user as any).id;
+    console.log("Creating doc with data:", { title, ownerId: userId });
 
     if (!prisma.doc) {
       console.error("Prisma Doc model is undefined!");
@@ -70,7 +72,7 @@ export async function POST(request: Request) {
         projectId,
         boardId,
         parentId,
-        ownerId: session.user.id,
+        ownerId: userId,
       }
     });
 

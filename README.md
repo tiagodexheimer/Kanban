@@ -102,7 +102,7 @@ Inspirado na inteligência do ClickUp.
 ### **Sprint 9: Docs & Conhecimento (Semana 9)**
 - [x] **ClickUp Docs**: Editor de texto rico (Rich Text) para documentação interna.Um editor Rich Text (Slash commands, markdown) integrado para criar wikis e documentação de processos dentro do workspace.
 - [x] **Whiteboards (Quadros Brancos)**: Uma área para desenho livre e diagramas (usando algo como Excalidraw ou Canvas API).
-- [ ] **Menções Globais**: Uso de `@` para referenciar membros ou tarefas em comentários. Permitir que subtarefas também tenham suas próprias subtarefas (recursividade).
+- [x] **Menções Globais**: Uso de `@` para referenciar membros ou tarefas em comentários.
 
 ### **Sprint 10: IA & Automações Avançadas (Semana 10)**
 - [ ] **IA de Resumo**: Uso de IA para resumir comentários e gerar descrições. Integrar uma API de LLM (como Gemini ou OpenAI) para resumir longas threads de comentários ou gerar descrições de tarefas automaticamente.

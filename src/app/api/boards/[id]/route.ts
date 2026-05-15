@@ -22,6 +22,9 @@ export async function GET(
       include: {
         tags: true,
         customFields: true,
+        owner: {
+          select: { id: true, name: true, image: true }
+        },
         permissions: {
           where: { userId },
           select: { canView: true, canEditTasks: true, canMoveTasks: true, canManageBoard: true }
@@ -49,8 +52,12 @@ export async function GET(
             id: true,
             ownerId: true,
             members: {
-              where: { userId },
-              select: { role: true }
+              select: { 
+                role: true,
+                user: {
+                  select: { id: true, name: true, image: true }
+                }
+              }
             }
           }
         },
@@ -61,10 +68,22 @@ export async function GET(
       return NextResponse.json({ error: "Board not found" }, { status: 404 });
     }
 
+    // Fetch all cards for mentions (including subtasks)
+    const allCards = await prisma.card.findMany({
+      where: { 
+        column: { boardId: id } 
+      },
+      select: { 
+        id: true, 
+        title: true,
+        parentId: true
+      }
+    });
+
     // Check permissions
     const isOwner = board.ownerId === userId || board.project?.ownerId === userId;
     const userPermission = board.permissions[0];
-    const projectMember = board.project?.members[0];
+    const projectMember = board.project?.members.find((m: any) => m.user.id === userId);
     
     // Project roles that grant full board access
     const isProjectAdmin = projectMember?.role === "OWNER" || projectMember?.role === "ADMIN";
@@ -81,7 +100,7 @@ export async function GET(
       canManageBoard: isOwner || isProjectAdmin || !!userPermission?.canManageBoard,
     };
 
-    return NextResponse.json({ ...board, userPermissions: permissions });
+    return NextResponse.json({ ...board, allCards, userPermissions: permissions });
   } catch (error) {
     console.error("Error fetching board:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

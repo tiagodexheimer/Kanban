@@ -13,7 +13,8 @@ export async function GET(request: Request) {
     const projectId = searchParams.get("projectId");
     const boardId = searchParams.get("boardId");
 
-    const where: any = { ownerId: session.user.id };
+    const userId = (session.user as any).id;
+    const where: any = { ownerId: userId };
     
     if (projectId) {
       where.projectId = projectId;
@@ -62,13 +63,14 @@ export async function POST(request: Request) {
 
     if (!title) return NextResponse.json({ error: "Title is required" }, { status: 400 });
 
+    const userId = (session.user as any).id;
     const whiteboard = await prisma.whiteboard.create({
       data: {
         title,
         data: data || "{}",
         projectId,
         boardId,
-        ownerId: session.user.id,
+        ownerId: userId,
       }
     });
 

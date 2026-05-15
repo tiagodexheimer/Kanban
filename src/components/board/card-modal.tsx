@@ -240,7 +240,7 @@ function CardForm({ card, columnId, onClose, boardTags, boardId, projectId, boar
 
               {card && (
                 <div className="pt-6 border-t border-border/50">
-                  <CommentSection cardId={card.id} />
+                  <CommentSection cardId={card.id} board={board} />
                 </div>
               )}
             </div>
