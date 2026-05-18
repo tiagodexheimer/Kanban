@@ -113,47 +113,6 @@ export default function ProjectBacklogPage() {
 
         {/* SINGLE FOCUSED BACKLOG CONTENT */}
         <div className="w-full space-y-6 animate-fadeIn">
-          {/* Backlog Header Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card border border-border p-4 rounded-2xl shadow-2xs">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-primary/10 rounded-xl text-primary">
-                <Inbox size={22} />
-              </div>
-              <div>
-                <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block">Backlog Selecionado</span>
-                {backlogs && backlogs.length > 0 ? (
-                  <select
-                    value={activeBacklog?.id || ""}
-                    onChange={(e) => {
-                      const newId = e.target.value;
-                      setSelectedBacklogId(newId);
-                      router.push(`/projects/${projectId}/backlog?backlogId=${newId}`);
-                    }}
-                    className="bg-transparent font-black text-base text-foreground outline-none border-none cursor-pointer pr-8 block -mt-1 focus:ring-0"
-                  >
-                    {backlogs.map(b => (
-                      <option key={b.id} value={b.id} className="bg-card font-semibold text-sm">{b.title}</option>
-                    ))}
-                  </select>
-                ) : (
-                  <span className="font-black text-base text-muted-foreground">Nenhum backlog criado</span>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 self-end sm:self-auto">
-              <button
-                onClick={() => {
-                  setSettingsTab("backlogs");
-                  setIsSettingsOpen(true);
-                }}
-                className="px-3.5 py-2 border border-border rounded-xl text-xs font-bold hover:bg-accent text-muted-foreground hover:text-foreground transition-all flex items-center gap-1.5 shadow-2xs"
-              >
-                <Settings size={13} />
-                Gerenciar Backlogs
-              </button>
-            </div>
-          </div>
 
           {activeBacklog && (
             <div className="bg-card border border-border rounded-2xl p-6 shadow-xs space-y-6">
