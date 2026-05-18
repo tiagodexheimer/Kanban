@@ -235,10 +235,37 @@ export function useCreateBoard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["boards"] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["project-stats"] });
       toast.success("Quadro criado com sucesso!");
     },
     onError: () => {
       toast.error("Erro ao criar quadro");
+    }
+  });
+}
+
+export function useUpdateBoard() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ boardId, title, description }: { boardId: string; title?: string; description?: string }) => {
+      const res = await fetch(`/api/boards/${boardId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, description }),
+      });
+      if (!res.ok) throw new Error("Failed to update board");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["boards"] });
+      queryClient.invalidateQueries({ queryKey: ["board", data.id] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["project-stats"] });
+      toast.success("Quadro atualizado com sucesso!");
+    },
+    onError: () => {
+      toast.error("Erro ao atualizar quadro");
     }
   });
 }
@@ -1124,4 +1151,70 @@ export function useUpdateProfile() {
     }
   });
 }
+
+export interface ProjectStats {
+  project: {
+    id: string;
+    title: string;
+    description?: string;
+    createdAt: string;
+    updatedAt: string;
+  };
+  stats: {
+    boardsCount: number;
+    foldersCount: number;
+    membersCount: number;
+    tasksCount: number;
+    completedTasksCount: number;
+    pendingTasksCount: number;
+  };
+  boards: {
+    id: string;
+    title: string;
+    description?: string;
+    totalTasks: number;
+    completedTasks: number;
+    pendingTasks: number;
+  }[];
+  members: {
+    userId: string;
+    role: string;
+    user: User;
+    tasksAssignedCount: number;
+  }[];
+  priorityDistribution: { name: string; value: number }[];
+  statusDistribution: { name: string; value: number }[];
+  deadlineDistribution: { name: string; value: number }[];
+  overdueTasks: {
+    id: string;
+    title: string;
+    dueDate: string;
+    priority: string;
+    boardId?: string;
+    boardTitle?: string;
+    assignees: User[];
+  }[];
+  upcomingTasks: {
+    id: string;
+    title: string;
+    dueDate: string;
+    priority: string;
+    boardId?: string;
+    boardTitle?: string;
+    assignees: User[];
+  }[];
+}
+
+export function useProjectStats(projectId: string) {
+  return useQuery<ProjectStats>({
+    queryKey: ["project-stats", projectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/projects/${projectId}/stats`);
+      if (!res.ok) throw new Error("Failed to fetch project stats");
+      return res.json();
+    },
+    enabled: !!projectId,
+  });
+}
+
 

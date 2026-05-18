@@ -109,6 +109,61 @@ export async function GET(
   }
 }
 
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const session = await getServerSession(authOptions);
+    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const userId = (session.user as any).id;
+
+    const board = await prisma.board.findUnique({
+      where: { id },
+      include: {
+        project: {
+          include: {
+            members: { where: { userId } }
+          }
+        },
+        permissions: { where: { userId } }
+      }
+    });
+
+    if (!board) return NextResponse.json({ error: "Board not found" }, { status: 404 });
+
+    const isOwner = board.ownerId === userId;
+    const projectMember = board.project?.members[0];
+    const isProjectAdmin = projectMember?.role === "OWNER" || projectMember?.role === "ADMIN";
+    const canManageBoard = board.permissions[0]?.canManageBoard;
+
+    if (!isOwner && !isProjectAdmin && !canManageBoard) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const { title, description } = await request.json();
+
+    if (title !== undefined && !title.trim()) {
+      return NextResponse.json({ error: "Title is required" }, { status: 400 });
+    }
+
+    const updatedBoard = await prisma.board.update({
+      where: { id },
+      data: {
+        title: title !== undefined ? title : undefined,
+        description: description !== undefined ? description : undefined,
+      }
+    });
+
+    return NextResponse.json(updatedBoard);
+  } catch (error) {
+    console.error("Error updating board:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }

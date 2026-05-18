@@ -2,7 +2,14 @@
 
 import React, { useState } from "react";
 import { Modal } from "../ui/modal";
-import { useBoard, useCustomFields, useDeleteBoard, useUpdateBoardPermission, useBoardMembers } from "@/hooks/use-omnitask";
+import { 
+  useBoard, 
+  useCustomFields, 
+  useDeleteBoard, 
+  useUpdateBoardPermission, 
+  useBoardMembers,
+  useUpdateBoard
+} from "@/hooks/use-omnitask";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2, Type, Hash, Calendar, DollarSign, List, Shield, AlertTriangle, Eye, Edit3, Move, Settings as SettingsIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -20,13 +27,23 @@ export function BoardSettingsModal({ isOpen, onClose, boardId }: BoardSettingsMo
   const { data: memberData } = useBoardMembers(boardId);
   const deleteBoardMutation = useDeleteBoard();
   const updatePermission = useUpdateBoardPermission();
+  const updateBoardMutation = useUpdateBoard();
+
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [newFieldName, setNewFieldName] = useState("");
   const [newFieldType, setNewFieldType] = useState("TEXT");
-  const [activeTab, setActiveTab] = useState<"campos" | "permissões" | "danger">("campos");
+  const [activeTab, setActiveTab] = useState<"geral" | "campos" | "permissões" | "danger">("geral");
 
   const canManage = board?.userPermissions?.canManageBoard;
-
   const members = memberData?.projectMembers || [];
+
+  React.useEffect(() => {
+    if (board && isOpen) {
+      setTitle(board.title || "");
+      setDescription(board.description || "");
+    }
+  }, [board, isOpen]);
 
   const handleTogglePermission = (userId: string, key: string, value: boolean) => {
     updatePermission.mutate({
@@ -72,13 +89,28 @@ export function BoardSettingsModal({ isOpen, onClose, boardId }: BoardSettingsMo
     });
   };
 
+  const handleSaveGeneral = () => {
+    if (!title.trim()) return;
+    updateBoardMutation.mutate({
+      boardId,
+      title,
+      description
+    });
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Configurações do Quadro" size="lg">
       <div className="flex flex-col h-full max-h-[75vh]">
-        <div className="flex gap-4 border-b border-border mb-6">
+        <div className="flex gap-2 md:gap-4 border-b border-border mb-6 overflow-x-auto scrollbar-none shrink-0">
+          <button 
+            onClick={() => setActiveTab("geral")}
+            className={cn("px-4 py-2 text-sm font-medium border-b-2 transition-all whitespace-nowrap", activeTab === "geral" ? "border-primary text-primary" : "border-transparent text-muted-foreground")}
+          >
+            Geral
+          </button>
           <button 
             onClick={() => setActiveTab("campos")}
-            className={cn("px-4 py-2 text-sm font-medium border-b-2 transition-all", activeTab === "campos" ? "border-primary text-primary" : "border-transparent text-muted-foreground")}
+            className={cn("px-4 py-2 text-sm font-medium border-b-2 transition-all whitespace-nowrap", activeTab === "campos" ? "border-primary text-primary" : "border-transparent text-muted-foreground")}
           >
             Campos Customizados
           </button>
@@ -86,13 +118,13 @@ export function BoardSettingsModal({ isOpen, onClose, boardId }: BoardSettingsMo
             <>
               <button 
                 onClick={() => setActiveTab("permissões")}
-                className={cn("px-4 py-2 text-sm font-medium border-b-2 transition-all", activeTab === "permissões" ? "border-primary text-primary" : "border-transparent text-muted-foreground")}
+                className={cn("px-4 py-2 text-sm font-medium border-b-2 transition-all whitespace-nowrap", activeTab === "permissões" ? "border-primary text-primary" : "border-transparent text-muted-foreground")}
               >
                 Permissões
               </button>
               <button 
                 onClick={() => setActiveTab("danger")}
-                className={cn("px-4 py-2 text-sm font-medium border-b-2 transition-all", activeTab === "danger" ? "border-destructive text-destructive" : "border-transparent text-muted-foreground")}
+                className={cn("px-4 py-2 text-sm font-medium border-b-2 transition-all whitespace-nowrap", activeTab === "danger" ? "border-destructive text-destructive" : "border-transparent text-muted-foreground")}
               >
                 Zona de Perigo
               </button>
@@ -101,6 +133,42 @@ export function BoardSettingsModal({ isOpen, onClose, boardId }: BoardSettingsMo
         </div>
 
         <div className="flex-1 overflow-y-auto pr-2">
+          {activeTab === "geral" && (
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-muted-foreground uppercase">Nome do Quadro</label>
+                  <input 
+                    type="text" 
+                    placeholder="Nome do quadro"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="bg-background border border-border rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-primary w-full font-semibold"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-muted-foreground uppercase">Descrição</label>
+                  <textarea 
+                    placeholder="Descrição do quadro (opcional)"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={4}
+                    className="bg-background border border-border rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-primary w-full resize-none"
+                  />
+                </div>
+
+                <button 
+                  onClick={handleSaveGeneral}
+                  disabled={updateBoardMutation.isPending || !title.trim()}
+                  className="w-full py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-bold hover:opacity-90 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 mt-4"
+                >
+                  {updateBoardMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+                </button>
+              </div>
+            </div>
+          )}
+
           {activeTab === "campos" && (
             <div className="space-y-6">
               <div>

@@ -26,13 +26,13 @@ import { toast } from "sonner";
 import { Folder, ChevronDown, Users, UserPlus, FolderPlus } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import { ProjectSettingsModal } from "../project/project-settings-modal";
+import { CreateBoardModal } from "../board/create-board-modal";
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { data: session } = useSession();
   const { data: boards, isLoading: isLoadingBoards } = useBoards();
   const { data: projects, isLoading: isLoadingProjects } = useProjects();
-  const createBoardMutation = useCreateBoard();
   const createProjectMutation = useCreateProject();
   const createFolderMutation = useCreateFolder();
   const inviteMutation = useInviteToProject();
@@ -42,6 +42,8 @@ export function Sidebar() {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [isProjectsSectionExpanded, setIsProjectsSectionExpanded] = useState(true);
   const [activeSettingsTab, setActiveSettingsTab] = useState<"geral" | "membros">("geral");
+  const [isCreateBoardOpen, setIsCreateBoardOpen] = useState(false);
+  const [createBoardParams, setCreateBoardParams] = useState<{ projectId?: string; folderId?: string }>({});
 
   const toggleProject = (projectId: string) => {
     setExpandedProjects(prev => 
@@ -110,20 +112,9 @@ export function Sidebar() {
   };
 
 
-  const handleCreateBoard = async (projectId?: string, folderId?: string) => {
-    const title = prompt("Título do novo quadro:");
-    if (!title) return;
-
-    createBoardMutation.mutate({ 
-      title, 
-      description: "Novo quadro criado",
-      projectId,
-      folderId
-    }, {
-      onSuccess: (data) => {
-        router.push(`/boards/${data.id}`);
-      }
-    });
+  const handleCreateBoard = (projectId?: string, folderId?: string) => {
+    setCreateBoardParams({ projectId, folderId });
+    setIsCreateBoardOpen(true);
   };
 
   const handleCreateFolder = async (projectId: string) => {
@@ -237,9 +228,16 @@ export function Sidebar() {
                       <div 
                         className={cn(
                           "group flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-accent transition-all",
-                          expandedProjects.includes(project.id) ? "bg-accent/50" : ""
+                          pathname === `/projects/${project.id}` 
+                            ? "bg-primary/10 text-primary font-semibold" 
+                            : expandedProjects.includes(project.id) 
+                              ? "bg-accent/50" 
+                              : ""
                         )}
-                        onClick={() => toggleProject(project.id)}
+                        onClick={() => {
+                          router.push(`/projects/${project.id}`);
+                          toggleProject(project.id);
+                        }}
                       >
                         <Briefcase size={18} className="text-primary shrink-0" />
                         <div className="flex-1 flex items-center justify-between min-w-0">
@@ -483,6 +481,12 @@ export function Sidebar() {
           initialTab={activeSettingsTab}
         />
       )}
+      <CreateBoardModal 
+        isOpen={isCreateBoardOpen}
+        onClose={() => setIsCreateBoardOpen(false)}
+        projectId={createBoardParams.projectId}
+        folderId={createBoardParams.folderId}
+      />
     </aside>
   );
 }

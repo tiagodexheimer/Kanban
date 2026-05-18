@@ -2,14 +2,14 @@
 
 import { useBoards } from "@/hooks/use-omnitask";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { LayoutDashboard, Plus } from "lucide-react";
-import { useCreateBoard } from "@/hooks/use-omnitask";
+import { CreateBoardModal } from "@/components/board/create-board-modal";
 
 export default function DashboardPage() {
   const { data: boards, isLoading } = useBoards();
   const router = useRouter();
-  const createBoardMutation = useCreateBoard();
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   useEffect(() => {
     if (!isLoading && boards && boards.length > 0) {
@@ -17,12 +17,6 @@ export default function DashboardPage() {
       router.replace(`/boards/${boards[0].id}`);
     }
   }, [boards, isLoading, router]);
-
-  const handleCreateBoard = () => {
-    const title = prompt("Título do novo quadro:");
-    if (!title) return;
-    createBoardMutation.mutate({ title, description: "Novo quadro criado" });
-  };
 
   if (isLoading) {
     return (
@@ -48,12 +42,14 @@ export default function DashboardPage() {
         </p>
       </div>
       <button 
-        onClick={handleCreateBoard}
+        onClick={() => setIsCreateOpen(true)}
         className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm shadow-xl shadow-primary/20 hover:scale-105 transition-all active:scale-95 flex items-center gap-2"
       >
         <Plus size={18} />
         Criar Meu Primeiro Quadro
       </button>
+
+      <CreateBoardModal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} />
     </div>
   );
 }
