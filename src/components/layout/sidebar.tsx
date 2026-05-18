@@ -39,6 +39,7 @@ export function Sidebar() {
   const [expandedProjects, setExpandedProjects] = useState<string[]>([]);
   const [expandedFolders, setExpandedFolders] = useState<string[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [isProjectsSectionExpanded, setIsProjectsSectionExpanded] = useState(true);
 
   const toggleProject = (projectId: string) => {
     setExpandedProjects(prev => 
@@ -52,13 +53,45 @@ export function Sidebar() {
     );
   };
 
+  React.useEffect(() => {
+    if (!activeBoardId || !projects) return;
+
+    for (const project of projects) {
+      // Check direct boards of the project
+      const hasDirectBoard = project.boards?.some(b => b.id === activeBoardId);
+      if (hasDirectBoard) {
+        setExpandedProjects(prev => prev.includes(project.id) ? prev : [...prev, project.id]);
+        setIsProjectsSectionExpanded(true);
+        break;
+      }
+
+      // Check boards inside folders of the project
+      if (project.folders) {
+        let foundInFolder = false;
+        for (const folder of project.folders) {
+          const hasBoardInFolder = folder.boards?.some(b => b.id === activeBoardId);
+          if (hasBoardInFolder) {
+            setExpandedProjects(prev => prev.includes(project.id) ? prev : [...prev, project.id]);
+            setExpandedFolders(prev => prev.includes(folder.id) ? prev : [...prev, folder.id]);
+            setIsProjectsSectionExpanded(true);
+            foundInFolder = true;
+            break;
+          }
+        }
+        if (foundInFolder) break;
+      }
+    }
+  }, [activeBoardId, projects]);
+
   const router = useRouter();
   const pathname = usePathname();
 
-  const navItems = [
+  const topNavItems: { icon: any; label: string; path?: string }[] = [
     { icon: Star, label: "Favoritos" },
     { icon: Search, label: "Busca" },
-    { icon: FolderKanban, label: "Projetos", path: activeBoardId ? `/boards/${activeBoardId}` : `/` },
+  ];
+
+  const bottomNavItems = [
     { icon: Book, label: "Documentos", path: `/docs` },
     { icon: Palette, label: "Whiteboards", path: activeBoardId ? `/boards/${activeBoardId}/whiteboard` : `/whiteboards` },
     { icon: Settings, label: "Configurações", path: "/settings" },
@@ -141,7 +174,7 @@ export function Sidebar() {
 
       <div className="flex-1 overflow-y-auto py-4 space-y-6 px-3">
         <div className="space-y-1">
-          {navItems.map((item, idx) => (
+          {topNavItems.map((item, idx) => (
             <button
               key={idx}
               onClick={() => handleNavClick(item)}
@@ -154,148 +187,187 @@ export function Sidebar() {
               {!isCollapsed && <span className="font-medium">{item.label}</span>}
             </button>
           ))}
-        </div>
 
-        <div className="space-y-4">
-          <div className="px-2 flex items-center justify-between group">
-            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Projetos</span>
-            {!isCollapsed && (
-              <button 
-                onClick={handleCreateProject}
-                className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-accent rounded transition-all"
-              >
-                <Plus size={14} />
-              </button>
-            )}
-          </div>
-          
+          {/* Unified "Projetos" section */}
           <div className="space-y-1">
-            {isLoadingProjects ? (
-              <div className="px-2 py-1 text-xs text-muted-foreground animate-pulse">Carregando projetos...</div>
-            ) : (
-              projects?.map((project) => (
-                <div key={project.id} className="space-y-1">
-                  <div 
-                    className={cn(
-                      "group flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-accent transition-all",
-                      expandedProjects.includes(project.id) ? "bg-accent/50" : ""
-                    )}
-                    onClick={() => toggleProject(project.id)}
+            <div 
+              onClick={() => {
+                if (isCollapsed) {
+                  router.push(activeBoardId ? `/boards/${activeBoardId}` : `/`);
+                } else {
+                  setIsProjectsSectionExpanded(!isProjectsSectionExpanded);
+                }
+              }}
+              className={cn(
+                "group w-full flex items-center justify-between p-2 rounded-lg transition-colors text-muted-foreground hover:bg-accent hover:text-foreground cursor-pointer",
+                pathname === "/" || (pathname.startsWith("/boards") && !pathname.includes("/whiteboard")) ? "bg-primary/10 text-primary font-bold" : ""
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <FolderKanban size={20} className={cn(pathname === "/" || (pathname.startsWith("/boards") && !pathname.includes("/whiteboard")) ? "text-primary" : "text-muted-foreground")} />
+                {!isCollapsed && <span className="font-medium">Projetos</span>}
+              </div>
+              {!isCollapsed && (
+                <div className="flex items-center gap-1">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); handleCreateProject(); }}
+                    className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-primary/20 rounded text-muted-foreground hover:text-foreground transition-all"
+                    title="Novo projeto"
                   >
-                    <Folder size={18} className="text-primary" />
-                    {!isCollapsed && (
-                      <div className="flex-1 flex items-center justify-between min-w-0">
-                        <span className="font-semibold text-sm truncate">{project.title}</span>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100">
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); setSelectedProjectId(project.id); }}
-                            className="p-1 hover:bg-primary/20 rounded text-primary"
-                            title="Configurações do projeto"
-                          >
-                            <Settings size={12} />
-                          </button>
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); handleInvite(project.id); }}
-                            className="p-1 hover:bg-primary/20 rounded text-primary"
-                            title="Convidar membro"
-                          >
-                            <UserPlus size={12} />
-                          </button>
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); handleCreateFolder(project.id); }}
-                            className="p-1 hover:bg-primary/20 rounded text-primary"
-                            title="Nova pasta"
-                          >
-                            <FolderPlus size={12} />
-                          </button>
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); handleCreateBoard(project.id); }}
-                            className="p-1 hover:bg-primary/20 rounded text-primary"
-                            title="Novo quadro"
-                          >
-                            <Plus size={12} />
-                          </button>
-                          <ChevronDown size={14} className={cn("transition-transform", expandedProjects.includes(project.id) ? "rotate-180" : "")} />
+                    <Plus size={14} />
+                  </button>
+                  <ChevronDown 
+                    size={16} 
+                    className={cn("transition-transform text-muted-foreground", isProjectsSectionExpanded ? "rotate-180" : "")} 
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Nested Project List */}
+            {isProjectsSectionExpanded && !isCollapsed && (
+              <div className="ml-4 pl-2 border-l border-border space-y-1 mt-1 animate-in slide-in-from-top-1 duration-200">
+                {isLoadingProjects ? (
+                  <div className="px-2 py-1 text-xs text-muted-foreground animate-pulse">Carregando projetos...</div>
+                ) : (
+                  projects?.map((project) => (
+                    <div key={project.id} className="space-y-1">
+                      <div 
+                        className={cn(
+                          "group flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-accent transition-all",
+                          expandedProjects.includes(project.id) ? "bg-accent/50" : ""
+                        )}
+                        onClick={() => toggleProject(project.id)}
+                      >
+                        <Folder size={18} className="text-primary shrink-0" />
+                        <div className="flex-1 flex items-center justify-between min-w-0">
+                          <span className="font-semibold text-sm truncate">{project.title}</span>
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 shrink-0">
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); setSelectedProjectId(project.id); }}
+                              className="p-1 hover:bg-primary/20 rounded text-primary"
+                              title="Configurações do projeto"
+                            >
+                              <Settings size={12} />
+                            </button>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); handleInvite(project.id); }}
+                              className="p-1 hover:bg-primary/20 rounded text-primary"
+                              title="Convidar membro"
+                            >
+                              <UserPlus size={12} />
+                            </button>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); handleCreateFolder(project.id); }}
+                              className="p-1 hover:bg-primary/20 rounded text-primary"
+                              title="Nova pasta"
+                            >
+                              <FolderPlus size={12} />
+                            </button>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); handleCreateBoard(project.id); }}
+                              className="p-1 hover:bg-primary/20 rounded text-primary"
+                              title="Novo quadro"
+                            >
+                              <Plus size={12} />
+                            </button>
+                            <ChevronDown size={14} className={cn("transition-transform", expandedProjects.includes(project.id) ? "rotate-180" : "")} />
+                          </div>
                         </div>
                       </div>
-                    )}
-                  </div>
- 
-                  {expandedProjects.includes(project.id) && !isCollapsed && (
-                    <div className="ml-4 pl-2 border-l border-border space-y-1 mt-1 animate-in slide-in-from-top-1 duration-200">
-                      {/* Folders in Project */}
-                      {project.folders?.map((folder) => (
-                        <div key={folder.id} className="space-y-1">
-                          <div 
-                            className={cn(
-                              "group flex items-center gap-2 p-1.5 rounded-lg cursor-pointer hover:bg-accent transition-all",
-                              expandedFolders.includes(folder.id) ? "bg-accent/30" : ""
-                            )}
-                            onClick={() => toggleFolder(folder.id)}
-                          >
-                            <Folder size={16} className="text-muted-foreground" />
-                            <span className="flex-1 text-xs font-medium truncate">{folder.title}</span>
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100">
-                              <button 
-                                onClick={(e) => { e.stopPropagation(); handleCreateBoard(project.id, folder.id); }}
-                                className="p-0.5 hover:bg-primary/20 rounded text-primary"
+
+                      {expandedProjects.includes(project.id) && (
+                        <div className="ml-4 pl-2 border-l border-border space-y-1 mt-1 animate-in slide-in-from-top-1 duration-200">
+                          {/* Folders in Project */}
+                          {project.folders?.map((folder) => (
+                            <div key={folder.id} className="space-y-1">
+                              <div 
+                                className={cn(
+                                  "group flex items-center gap-2 p-1.5 rounded-lg cursor-pointer hover:bg-accent transition-all",
+                                  expandedFolders.includes(folder.id) ? "bg-accent/30" : ""
+                                )}
+                                onClick={() => toggleFolder(folder.id)}
                               >
-                                <Plus size={10} />
-                              </button>
-                              <ChevronDown size={12} className={cn("transition-transform", expandedFolders.includes(folder.id) ? "rotate-180" : "")} />
-                            </div>
-                          </div>
-                          
-                          {expandedFolders.includes(folder.id) && (
-                            <div className="ml-4 pl-2 border-l border-border/50 space-y-1">
-                              {folder.boards?.map((board) => (
-                                <button
-                                  key={board.id}
-                                  onClick={() => handleBoardClick(board.id)}
-                                  className={cn(
-                                    "w-full flex items-center gap-3 p-1.5 rounded-lg text-[13px] transition-all",
-                                    activeBoardId === board.id 
-                                      ? "bg-primary/10 text-primary font-medium" 
-                                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                                <Folder size={16} className="text-muted-foreground shrink-0" />
+                                <span className="flex-1 text-xs font-medium truncate">{folder.title}</span>
+                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 shrink-0">
+                                  <button 
+                                    onClick={(e) => { e.stopPropagation(); handleCreateBoard(project.id, folder.id); }}
+                                    className="p-0.5 hover:bg-primary/20 rounded text-primary"
+                                  >
+                                    <Plus size={10} />
+                                  </button>
+                                  <ChevronDown size={12} className={cn("transition-transform", expandedFolders.includes(folder.id) ? "rotate-180" : "")} />
+                                </div>
+                              </div>
+                              
+                              {expandedFolders.includes(folder.id) && (
+                                <div className="ml-4 pl-2 border-l border-border/50 space-y-1">
+                                  {folder.boards?.map((board) => (
+                                    <button
+                                      key={board.id}
+                                      onClick={() => handleBoardClick(board.id)}
+                                      className={cn(
+                                        "w-full flex items-center gap-3 p-1.5 rounded-lg text-[13px] transition-all",
+                                        activeBoardId === board.id 
+                                          ? "bg-primary/10 text-primary font-medium" 
+                                          : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                                      )}
+                                    >
+                                      <LayoutDashboard size={12} />
+                                      <span className="truncate">{board.title}</span>
+                                    </button>
+                                  ))}
+                                  {(folder.boards?.length || 0) === 0 && (
+                                    <div className="px-2 py-1 text-[10px] text-muted-foreground italic">Vazio</div>
                                   )}
-                                >
-                                  <LayoutDashboard size={12} />
-                                  <span className="truncate">{board.title}</span>
-                                </button>
-                              ))}
-                              {(folder.boards?.length || 0) === 0 && (
-                                <div className="px-2 py-1 text-[10px] text-muted-foreground italic">Vazio</div>
+                                </div>
                               )}
                             </div>
+                          ))}
+
+                          {/* Direct Boards in Project */}
+                          {project.boards?.filter(b => !b.folderId).map((board) => (
+                            <button
+                              key={board.id}
+                              onClick={() => handleBoardClick(board.id)}
+                              className={cn(
+                                "w-full flex items-center gap-3 p-1.5 rounded-lg text-[13px] transition-all",
+                                activeBoardId === board.id 
+                                  ? "bg-primary/10 text-primary font-medium" 
+                                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                              )}
+                            >
+                              <LayoutDashboard size={12} />
+                              <span className="truncate">{board.title}</span>
+                            </button>
+                          ))}
+                          {(project.boards?.length || 0) === 0 && (project.folders?.length || 0) === 0 && (
+                            <div className="px-2 py-1 text-[10px] text-muted-foreground italic">Nenhum quadro</div>
                           )}
                         </div>
-                      ))}
-
-                      {/* Direct Boards in Project */}
-                      {project.boards?.filter(b => !b.folderId).map((board) => (
-                        <button
-                          key={board.id}
-                          onClick={() => handleBoardClick(board.id)}
-                          className={cn(
-                            "w-full flex items-center gap-3 p-1.5 rounded-lg text-[13px] transition-all",
-                            activeBoardId === board.id 
-                              ? "bg-primary/10 text-primary font-medium" 
-                              : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                          )}
-                        >
-                          <LayoutDashboard size={12} />
-                          <span className="truncate">{board.title}</span>
-                        </button>
-                      ))}
-                      {(project.boards?.length || 0) === 0 && (project.folders?.length || 0) === 0 && (
-                        <div className="px-2 py-1 text-[10px] text-muted-foreground italic">Nenhum quadro</div>
                       )}
                     </div>
-                  )}
-                </div>
-              ))
+                  ))
+                )}
+              </div>
             )}
           </div>
+
+          {/* Bottom Nav Items */}
+          {bottomNavItems.map((item, idx) => (
+            <button
+              key={idx}
+              onClick={() => handleNavClick(item)}
+              className={cn(
+                "w-full flex items-center gap-3 p-2 rounded-lg transition-colors text-muted-foreground hover:bg-accent hover:text-foreground",
+                item.path && pathname.startsWith(item.path) && item.path !== "/" ? "bg-primary/10 text-primary font-bold" : ""
+              )}
+            >
+              <item.icon size={20} />
+              {!isCollapsed && <span className="font-medium">{item.label}</span>}
+            </button>
+          ))}
         </div>
 
         <div className="space-y-2">
