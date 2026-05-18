@@ -15,7 +15,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Book,
-  Palette
+  Palette,
+  Briefcase
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
@@ -239,7 +240,7 @@ export function Sidebar() {
                         )}
                         onClick={() => toggleProject(project.id)}
                       >
-                        <Folder size={18} className="text-primary shrink-0" />
+                        <Briefcase size={18} className="text-primary shrink-0" />
                         <div className="flex-1 flex items-center justify-between min-w-0">
                           <span className="font-semibold text-sm truncate">{project.title}</span>
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 shrink-0">
