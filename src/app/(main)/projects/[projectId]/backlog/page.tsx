@@ -28,17 +28,12 @@ export default function ProjectBacklogPage() {
   const { data, isLoading, error } = useProjectStats(projectId);
   const { data: backlogs, isLoading: isLoadingBacklogs } = useBacklogs(projectId);
 
-  const createBacklogTaskMutation = useCreateBacklogTask(projectId);
   const deleteBacklogTaskMutation = useDeleteBacklogTask(projectId);
   const promoteBacklogTaskMutation = usePromoteBacklogTask(projectId);
 
   const [selectedBacklogId, setSelectedBacklogId] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState<"geral" | "membros" | "backlogs">("backlogs");
-  const [activeAddTaskBacklogId, setActiveAddTaskBacklogId] = useState<string | null>(null);
-  const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [newTaskDescription, setNewTaskDescription] = useState("");
-  const [newTaskPriority, setNewTaskPriority] = useState("Média");
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
 
@@ -174,117 +169,15 @@ export default function ProjectBacklogPage() {
 
                 <button
                   onClick={() => {
-                    if (activeAddTaskBacklogId === activeBacklog.id) {
-                      setActiveAddTaskBacklogId(null);
-                    } else {
-                      setActiveAddTaskBacklogId(activeBacklog.id);
-                    }
+                    setActiveCardId(null);
+                    setIsCardModalOpen(true);
                   }}
                   className="px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold rounded-xl transition-all flex items-center gap-1 self-start sm:self-auto"
                 >
-                  {activeAddTaskBacklogId === activeBacklog.id ? (
-                    <>
-                      <X size={13} />
-                      Cancelar
-                    </>
-                  ) : (
-                    <>
-                      <Plus size={13} />
-                      Nova Tarefa
-                    </>
-                  )}
+                  <Plus size={13} />
+                  Nova Tarefa
                 </button>
               </div>
-
-              {/* Add Task Expandable Form */}
-              {activeAddTaskBacklogId === activeBacklog.id && (
-                <div className="p-5 bg-accent/10 border border-border rounded-2xl animate-in slide-in-from-top-2 duration-200 space-y-4">
-                  <div className="flex justify-between items-center pb-2 border-b border-border/20">
-                    <h5 className="text-xs font-black uppercase text-primary tracking-wider">Nova Tarefa no Backlog</h5>
-                    <button 
-                      onClick={() => setActiveAddTaskBacklogId(null)}
-                      className="p-1 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">Título</label>
-                      <input 
-                        type="text"
-                        placeholder="Título da tarefa..."
-                        value={newTaskTitle}
-                        onChange={(e) => setNewTaskTitle(e.target.value)}
-                        className="w-full bg-background border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary transition-all font-semibold"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">Descrição</label>
-                      <textarea
-                        placeholder="Descreva o que deve ser feito (opcional)..."
-                        value={newTaskDescription}
-                        onChange={(e) => setNewTaskDescription(e.target.value)}
-                        className="w-full bg-background border border-border rounded-xl px-3 py-2 text-sm min-h-[80px] focus:outline-none focus:border-primary transition-all font-medium resize-none"
-                      />
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
-                      <div className="flex items-center gap-2">
-                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">Prioridade</label>
-                        <select
-                          value={newTaskPriority}
-                          onChange={(e) => setNewTaskPriority(e.target.value)}
-                          className="bg-background border border-border rounded-xl px-2 py-1 text-xs font-bold focus:outline-none focus:border-primary transition-all"
-                        >
-                          <option value="Baixa">Baixa</option>
-                          <option value="Média">Média</option>
-                          <option value="Alta">Alta</option>
-                          <option value="Urgente">Urgente</option>
-                        </select>
-                      </div>
-
-                      <div className="flex items-center gap-2 self-end sm:self-auto">
-                        <button
-                          onClick={() => {
-                            setActiveAddTaskBacklogId(null);
-                            setNewTaskTitle("");
-                            setNewTaskDescription("");
-                            setNewTaskPriority("Média");
-                          }}
-                          className="px-3.5 py-2 hover:bg-accent text-muted-foreground hover:text-foreground font-bold rounded-xl text-xs transition-all"
-                        >
-                          Cancelar
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (!newTaskTitle.trim()) return;
-                            createBacklogTaskMutation.mutate({
-                              backlogId: activeBacklog.id,
-                              title: newTaskTitle.trim(),
-                              description: newTaskDescription.trim(),
-                              priority: newTaskPriority
-                            }, {
-                              onSuccess: () => {
-                                setNewTaskTitle("");
-                                setNewTaskDescription("");
-                                setNewTaskPriority("Média");
-                                setActiveAddTaskBacklogId(null);
-                              }
-                            });
-                          }}
-                          disabled={!newTaskTitle.trim() || createBacklogTaskMutation.isPending}
-                          className="px-4 py-2 bg-primary text-primary-foreground font-bold rounded-xl text-xs hover:opacity-90 transition-all flex items-center gap-1.5 shadow-md"
-                        >
-                          {createBacklogTaskMutation.isPending ? "Adicionando..." : "Criar Tarefa"}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* Tasks list */}
               <div className="space-y-3">
@@ -453,15 +346,16 @@ export default function ProjectBacklogPage() {
         </div>
       </div>
 
-      {isCardModalOpen && activeCardId && (
+      {isCardModalOpen && (
         <CardModal
           isOpen={isCardModalOpen}
           onClose={() => {
             setIsCardModalOpen(false);
             setActiveCardId(null);
           }}
-          cardId={activeCardId}
+          cardId={activeCardId || undefined}
           boardId={boards?.[0]?.id}
+          backlogId={activeBacklog?.id}
         />
       )}
 

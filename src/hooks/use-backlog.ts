@@ -89,12 +89,56 @@ export function useCreateBacklogTask(projectId: string) {
       });
       return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["backlogs", projectId] });
-      toast.success("Tarefa adicionada ao backlog!");
+    onMutate: async (newData) => {
+      await queryClient.cancelQueries({ queryKey: ["backlogs", projectId] });
+      const previousBacklogs = queryClient.getQueryData<Backlog[]>(["backlogs", projectId]);
+
+      const optimisticTask: Card = {
+        id: `temp-${Date.now()}`,
+        title: newData.title,
+        description: newData.description || undefined,
+        position: 0,
+        priority: (newData.priority as any) || "Medium",
+        columnId: "", 
+        backlogId: newData.backlogId,
+        dueDate: newData.dueDate ? new Date(newData.dueDate) : null,
+        tags: [],
+        assignees: [],
+        checklists: newData.checklists 
+          ? newData.checklists.map((c, i) => ({ id: `temp-chk-${i}`, text: c.text, completed: c.completed, position: c.position, cardId: "" }))
+          : [],
+        customFieldValues: newData.customFieldValues
+          ? newData.customFieldValues.map(v => ({ id: `temp-val-${v.customFieldId}`, value: v.value, customFieldId: v.customFieldId, cardId: "" }))
+          : [],
+        createdAt: new Date().toISOString(),
+      };
+
+      queryClient.setQueryData<Backlog[]>(["backlogs", projectId], (old) => {
+        if (!old) return old;
+        return old.map(backlog => {
+          if (backlog.id === newData.backlogId) {
+            return {
+              ...backlog,
+              tasks: [...(backlog.tasks || []), optimisticTask]
+            };
+          }
+          return backlog;
+        });
+      });
+
+      return { previousBacklogs };
     },
-    onError: () => {
+    onError: (err, newCard, context) => {
+      if (context?.previousBacklogs) {
+        queryClient.setQueryData(["backlogs", projectId], context.previousBacklogs);
+      }
       toast.error("Erro ao adicionar tarefa");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["backlogs", projectId] });
+    },
+    onSuccess: () => {
+      toast.success("Tarefa adicionada ao backlog!");
     }
   });
 }

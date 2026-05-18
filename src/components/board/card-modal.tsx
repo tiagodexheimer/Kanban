@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Modal } from "../ui/modal";
 import { useBoards, useBoard, useCard, useUpdateCard, useCreateCard, useDeleteCard, Card, Tag, useProjects } from "@/hooks/use-omnitask";
+import { useCreateBacklogTask } from "@/hooks/use-backlog";
 import { ChecklistEditor } from "./checklist-editor";
 import { TagSelector } from "./tag-selector";
 import { AssigneeSelector } from "./assignee-selector";
@@ -20,9 +21,10 @@ interface CardModalProps {
   columnId?: string;
   cardId?: string;
   boardId?: string;
+  backlogId?: string;
 }
 
-export function CardModal({ isOpen, onClose, columnId, cardId, boardId: propBoardId }: CardModalProps) {
+export function CardModal({ isOpen, onClose, columnId, cardId, boardId: propBoardId, backlogId }: CardModalProps) {
   const { data: boards } = useBoards();
   const boardId = propBoardId || boards?.[0]?.id;
   const { data: board } = useBoard(boardId!);
@@ -44,6 +46,7 @@ export function CardModal({ isOpen, onClose, columnId, cardId, boardId: propBoar
           <CardForm 
             card={fullCard} 
             columnId={columnId} 
+            backlogId={backlogId}
             onClose={onClose} 
             boardTags={board?.tags || []}
             boardId={boardId}
@@ -59,6 +62,7 @@ export function CardModal({ isOpen, onClose, columnId, cardId, boardId: propBoar
 interface CardFormProps {
   card?: Card | null;
   columnId?: string;
+  backlogId?: string;
   onClose: () => void;
   boardTags: Tag[];
   boardId?: string;
@@ -66,9 +70,10 @@ interface CardFormProps {
   board?: any;
 }
 
-function CardForm({ card, columnId, onClose, boardTags, boardId, projectId, board }: CardFormProps) {
+function CardForm({ card, columnId, backlogId, onClose, boardTags, boardId, projectId, board }: CardFormProps) {
   const updateCardMutation = useUpdateCard();
   const createCardMutation = useCreateCard();
+  const createBacklogTaskMutation = useCreateBacklogTask(projectId || "");
   const deleteCardMutation = useDeleteCard();
 
   const [title, setTitle] = useState(card?.title || "");
@@ -147,6 +152,22 @@ function CardForm({ card, columnId, onClose, boardTags, boardId, projectId, boar
         blockedByIds,
         blockingIds,
         relatedToIds
+      });
+    } else if (backlogId) {
+      createBacklogTaskMutation.mutate({ 
+        title, 
+        backlogId, 
+        description,
+        priority,
+        dueDate: dueDate || null,
+        tagIds: selectedTagIds,
+        assigneeIds: selectedAssigneeIds,
+        parentId,
+        blockedByIds,
+        blockingIds,
+        relatedToIds,
+        checklists: checklists.map(c => ({ text: c.text, completed: c.completed, position: c.position })),
+        customFieldValues: customFieldValues.map(v => ({ customFieldId: v.customFieldId, value: v.value }))
       });
     } else if (columnId) {
       createCardMutation.mutate({ 

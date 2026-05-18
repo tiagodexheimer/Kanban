@@ -43,6 +43,7 @@ export interface Card {
   comments?: Comment[];
   position: number;
   columnId: string;
+  backlogId?: string | null;
   dueDate?: string | Date | null;
   customFieldValues?: CustomFieldValue[];
   parentId?: string;
