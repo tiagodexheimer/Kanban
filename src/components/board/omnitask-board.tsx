@@ -29,7 +29,6 @@ interface OmnitaskBoardProps {
   boardId: string;
   onEditCard: (cardId: string, columnId: string) => void;
   onAddCard: (columnId: string) => void;
-  onAddColumn: () => void;
   onUpdateCard: (data: any) => void;
   onUpdateColumn: (data: any) => void;
 }
@@ -39,7 +38,6 @@ export function OmnitaskBoard({
   boardId, 
   onEditCard, 
   onAddCard, 
-  onAddColumn,
   onUpdateCard,
   onUpdateColumn
 }: OmnitaskBoardProps) {
@@ -228,13 +226,6 @@ export function OmnitaskBoard({
             />
           ))}
         </SortableContext>
-        
-        <button 
-          onClick={onAddColumn}
-          className="w-80 shrink-0 h-12 flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border hover:border-primary hover:text-primary transition-all text-muted-foreground font-medium bg-secondary/20 hover:bg-secondary/40"
-        >
-          + Adicionar Lista
-        </button>
       </div>
 
       {typeof document !== 'undefined' && createPortal(

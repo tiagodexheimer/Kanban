@@ -47,16 +47,7 @@ export default function BoardPage() {
     setActiveBoardId(boardId);
   }, [boardId, setActiveBoardId]);
 
-  const handleAddColumn = () => {
-    const title = prompt("Título da nova lista:");
-    if (title && boardId && board) {
-      createColumnMutation.mutate({ 
-        title, 
-        boardId, 
-        position: board.columns.length + 1 
-      });
-    }
-  };
+
 
   const openEditModal = (cardId: string, columnId: string) => {
     setModalData({ cardId, columnId });
@@ -167,7 +158,6 @@ export default function BoardPage() {
             boardId={boardId}
             onEditCard={openEditModal}
             onAddCard={openCreateModal}
-            onAddColumn={handleAddColumn}
             onUpdateCard={updateCardMutation.mutate}
             onUpdateColumn={updateColumnMutation.mutate}
           />

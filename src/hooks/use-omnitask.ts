@@ -652,15 +652,18 @@ export function useCreateColumn() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (data: { title: string; boardId: string; position: number }) => {
+    mutationFn: async (data: { title: string; boardId: string; position: number; type?: string; color?: string }) => {
       const res = await fetch("/api/columns", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["board"] });
+      queryClient.invalidateQueries({ queryKey: ["board-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["project-stats"] });
       toast.success("Coluna criada!");
     },
     onError: () => {
@@ -706,6 +709,7 @@ export function useUpdateColumn() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["board"] });
       queryClient.invalidateQueries({ queryKey: ["board-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["project-stats"] });
     },
   });
 }
@@ -744,6 +748,8 @@ export function useDeleteColumn() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["board"] });
+      queryClient.invalidateQueries({ queryKey: ["board-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["project-stats"] });
     },
   });
 }

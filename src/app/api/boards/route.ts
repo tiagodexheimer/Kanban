@@ -85,9 +85,9 @@ export async function POST(request: Request) {
         },
         columns: {
           create: [
-            { title: "To Do", position: 1 },
-            { title: "Doing", position: 2 },
-            { title: "Done", position: 3 },
+            { title: "To Do", position: 1, type: "TODO", color: "#eab308" },
+            { title: "Doing", position: 2, type: "IN_PROGRESS", color: "#3b82f6" },
+            { title: "Done", position: 3, type: "DONE", color: "#22c55e" },
           ],
         },
       },

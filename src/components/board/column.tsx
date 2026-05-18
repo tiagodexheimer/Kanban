@@ -123,7 +123,7 @@ export function Column({ column, cards, onEditCard, onAddCard }: ColumnProps) {
                 "p-1.5 rounded-md text-muted-foreground transition-colors",
                 isColorMenuOpen ? "bg-accent text-primary" : "hover:bg-accent"
               )}
-              title="Mudar cor da lista"
+              title="Configurações da lista"
             >
               <Palette size={18} />
             </button>
@@ -133,22 +133,58 @@ export function Column({ column, cards, onEditCard, onAddCard }: ColumnProps) {
                   className="fixed inset-0 z-40" 
                   onClick={() => setIsColorMenuOpen(false)}
                 />
-                <div className="absolute right-0 top-full mt-2 bg-popover border border-border rounded-xl p-3 shadow-2xl z-50 grid grid-cols-4 gap-2 w-40 animate-in fade-in zoom-in duration-200">
-                  <p className="col-span-4 text-[10px] font-bold text-muted-foreground uppercase mb-1">Cores</p>
-                  {["#7c3aed", "#ef4444", "#22c55e", "#3b82f6", "#eab308", "#ec4899", "#f97316", "#64748b"].map(c => (
-                    <button 
-                      key={c}
-                      onClick={() => {
-                        handleColorChange(c);
-                        setIsColorMenuOpen(false);
-                      }}
-                      className={cn(
-                        "w-7 h-7 rounded-full hover:scale-110 transition-all border-2",
-                        column.color === c ? "border-foreground scale-110" : "border-transparent"
-                      )}
-                      style={{ backgroundColor: c }}
-                    />
-                  ))}
+                <div className="absolute right-0 top-full mt-2 bg-popover border border-border rounded-2xl p-4 shadow-2xl z-50 w-56 animate-in fade-in zoom-in duration-200 space-y-4">
+                  <div>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase mb-2">Cores</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {["#7c3aed", "#ef4444", "#22c55e", "#3b82f6", "#eab308", "#ec4899", "#f97316", "#64748b"].map(c => (
+                        <button 
+                          key={c}
+                          onClick={() => {
+                            handleColorChange(c);
+                            setIsColorMenuOpen(false);
+                          }}
+                          className={cn(
+                            "w-7 h-7 rounded-full hover:scale-110 transition-all border-2",
+                            column.color === c ? "border-foreground scale-110" : "border-transparent"
+                          )}
+                          style={{ backgroundColor: c }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="border-t border-border/60 pt-3">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase mb-2">Vínculo de Status</p>
+                    <div className="flex flex-col gap-1.5">
+                      {[
+                        { type: "TODO", label: "A Fazer (TODO)", color: "#eab308" },
+                        { type: "IN_PROGRESS", label: "Em Progresso (Doing)", color: "#3b82f6" },
+                        { type: "DONE", label: "Concluído (Done)", color: "#22c55e" }
+                      ].map((status) => (
+                        <button
+                          key={status.type}
+                          onClick={() => {
+                            handleTypeChange(status.type);
+                            handleColorChange(status.color);
+                            setIsColorMenuOpen(false);
+                          }}
+                          className={cn(
+                            "w-full text-left px-2.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-between",
+                            column.type === status.type 
+                              ? "bg-primary/10 text-primary" 
+                              : "hover:bg-accent text-muted-foreground"
+                          )}
+                        >
+                          <span className="flex items-center gap-2">
+                            <Circle size={8} fill={status.color} className="border-none shrink-0" style={{ color: status.color }} />
+                            {status.label}
+                          </span>
+                          {column.type === status.type && <Check size={14} className="text-primary shrink-0" />}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </>
             )}

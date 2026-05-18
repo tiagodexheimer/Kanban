@@ -4,13 +4,15 @@ import { NextResponse } from "next/server";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { title, boardId, position } = body;
+    const { title, boardId, position, type, color } = body;
 
     const column = await prisma.column.create({
       data: {
         title,
         boardId,
         position: position || 0,
+        type: type || "TODO",
+        color: color || "#eab308",
       },
     });
 

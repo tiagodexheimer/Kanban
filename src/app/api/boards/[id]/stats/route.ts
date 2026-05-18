@@ -62,7 +62,14 @@ export async function GET(
     
     const days = eachDayOfInterval({ start: startDate, end: endDate });
     const totalDays = days.length - 1;
-    const doneColumn = board.columns.find(col => col.title.toLowerCase() === "done" || col.title.toLowerCase() === "concluído");
+    
+    const doneColumns = board.columns.filter(col => 
+      col.type === "DONE" || 
+      col.title.toLowerCase() === "done" || 
+      col.title.toLowerCase() === "concluído" || 
+      col.title.toLowerCase() === "concluido"
+    );
+    const doneColumnIds = doneColumns.map(col => col.id);
 
     days.forEach((date, i) => {
       const dayEnd = endOfDay(date);
@@ -71,7 +78,7 @@ export async function GET(
       // Remaining tasks at the end of this day
       const totalCreatedUntilNow = allCards.filter(c => c.createdAt <= dayEnd).length;
       const totalDoneUntilNow = allCards.filter(c => 
-        c.columnId === doneColumn?.id && 
+        doneColumnIds.includes(c.columnId) && 
         c.updatedAt <= dayEnd
       ).length;
 
@@ -129,7 +136,7 @@ export async function GET(
       // Productivity (only for past and today)
       if (dayStart <= new Date()) {
         const completedCount = allCards.filter(c => 
-          c.columnId === doneColumn?.id && 
+          doneColumnIds.includes(c.columnId) && 
           c.updatedAt >= dayStart && 
           c.updatedAt <= dayEnd
         ).length;
@@ -141,6 +148,8 @@ export async function GET(
       }
     });
 
+    const totalDoneTasks = allCards.filter(c => doneColumnIds.includes(c.columnId)).length;
+
     return NextResponse.json({
       statusDistribution,
       priorityDistribution,
@@ -148,8 +157,8 @@ export async function GET(
       productivityData,
       summary: {
         total: allCards.length,
-        done: doneColumn?.cards.length || 0,
-        pending: allCards.length - (doneColumn?.cards.length || 0)
+        done: totalDoneTasks,
+        pending: allCards.length - totalDoneTasks
       }
     });
   } catch (error) {
