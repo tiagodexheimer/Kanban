@@ -394,6 +394,7 @@ export function useUpdateCard() {
       queryClient.invalidateQueries({ queryKey: ["activities"] });
       queryClient.invalidateQueries({ queryKey: ["card-activities"] });
       queryClient.invalidateQueries({ queryKey: ["board-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["project-stats"] });
     },
   });
 }
@@ -468,6 +469,7 @@ export function useCreateCard() {
       queryClient.invalidateQueries({ queryKey: ["board"] });
       queryClient.invalidateQueries({ queryKey: ["boards"] });
       queryClient.invalidateQueries({ queryKey: ["board-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["project-stats"] });
       toast.success("Tarefa criada com sucesso!");
     },
     onError: () => {
@@ -507,6 +509,8 @@ export function useCreateSubtask() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["card", variables.parentId] });
       queryClient.invalidateQueries({ queryKey: ["board"] });
+      queryClient.invalidateQueries({ queryKey: ["board-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["project-stats"] });
       toast.success("Subtarefa criada!");
     }
   });
@@ -573,6 +577,7 @@ export function useDeleteCard() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["board"] });
       queryClient.invalidateQueries({ queryKey: ["board-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["project-stats"] });
     },
   });
 }
@@ -884,6 +889,8 @@ export function useBoardStats(boardId: string) {
       return res.json();
     },
     enabled: !!boardId,
+    refetchOnMount: "always",
+    staleTime: 0,
   });
 }
 
@@ -1225,6 +1232,8 @@ export function useProjectStats(projectId: string) {
       return res.json();
     },
     enabled: !!projectId,
+    refetchOnMount: "always",
+    staleTime: 0,
   });
 }
 
