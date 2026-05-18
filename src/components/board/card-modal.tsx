@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Modal } from "../ui/modal";
-import { useBoards, useBoard, useCard, useUpdateCard, useCreateCard, useDeleteCard, Card, Tag, useProjects } from "@/hooks/use-omnitask";
+import { useBoards, useBoard, useCard, useUpdateCard, useCreateCard, useDeleteCard, Card, Tag, useProjects, useCustomFields } from "@/hooks/use-omnitask";
 import { useCreateBacklogTask } from "@/hooks/use-backlog";
 import { ChecklistEditor } from "./checklist-editor";
 import { TagSelector } from "./tag-selector";
@@ -22,15 +22,18 @@ interface CardModalProps {
   cardId?: string;
   boardId?: string;
   backlogId?: string;
+  projectId?: string;
 }
 
-export function CardModal({ isOpen, onClose, columnId, cardId, boardId: propBoardId, backlogId }: CardModalProps) {
+export function CardModal({ isOpen, onClose, columnId, cardId, boardId: propBoardId, backlogId, projectId: propProjectId }: CardModalProps) {
   const { data: boards } = useBoards();
   const boardId = propBoardId || boards?.[0]?.id;
   const { data: board } = useBoard(boardId!);
   
   const isEditing = !!cardId;
   const { data: fullCard, isLoading: isLoadingCard } = useCard(cardId!);
+
+  const projectId = propProjectId || board?.projectId;
 
   return (
     <Modal 
@@ -50,7 +53,7 @@ export function CardModal({ isOpen, onClose, columnId, cardId, boardId: propBoar
             onClose={onClose} 
             boardTags={board?.tags || []}
             boardId={boardId}
-            projectId={board?.projectId}
+            projectId={projectId}
             board={board}
           />
         )
@@ -75,6 +78,7 @@ function CardForm({ card, columnId, backlogId, onClose, boardTags, boardId, proj
   const createCardMutation = useCreateCard();
   const createBacklogTaskMutation = useCreateBacklogTask(projectId || "");
   const deleteCardMutation = useDeleteCard();
+  const { data: projectFields } = useCustomFields(projectId || "");
 
   const [title, setTitle] = useState(card?.title || "");
   const [description, setDescription] = useState(card?.description || "");
@@ -375,10 +379,10 @@ function CardForm({ card, columnId, backlogId, onClose, boardTags, boardId, proj
                 />
               )}
 
-              {board?.customFields && board.customFields.length > 0 && (
+              {projectFields && projectFields.length > 0 && (
                 <CustomFieldsEditor 
                   cardId={card?.id}
-                  fields={board.customFields}
+                  fields={projectFields}
                   values={customFieldValues}
                   onChange={handleCustomFieldChange}
                 />

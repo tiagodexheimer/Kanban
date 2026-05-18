@@ -1031,15 +1031,15 @@ export function useCreateFolder() {
   });
 }
 
-export function useCustomFields(boardId: string) {
+export function useCustomFields(projectId: string) {
   return useQuery<CustomField[]>({
-    queryKey: ["custom-fields", boardId],
+    queryKey: ["custom-fields", projectId],
     queryFn: async () => {
-      const res = await fetch(`/api/boards/${boardId}/fields`);
+      const res = await fetch(`/api/projects/${projectId}/fields`);
       if (!res.ok) throw new Error("Failed to fetch custom fields");
       return res.json();
     },
-    enabled: !!boardId,
+    enabled: !!projectId,
   });
 }
 

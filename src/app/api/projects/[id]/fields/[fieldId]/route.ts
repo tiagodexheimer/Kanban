@@ -8,12 +8,24 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string; fieldId: string }> }
 ) {
   try {
-    const { fieldId } = await params;
+    const { id: projectId, fieldId } = await params;
     const session = await getServerSession(authOptions);
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    // Ensure user has access to the board (implicit via ownership of the field if we trust the ID)
-    // For better security, we should check if board.ownerId === userId
+    const userId = (session.user as any).id;
+
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      include: { members: true }
+    });
+
+    if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
+
+    const memberRecord = project.members.find(m => m.userId === userId);
+    const isOwner = project.ownerId === userId;
+    const canEdit = isOwner || (memberRecord && memberRecord.role !== "VIEWER");
+
+    if (!canEdit) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     await prisma.customField.delete({
       where: { id: fieldId }

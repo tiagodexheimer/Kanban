@@ -211,6 +211,7 @@ export default function BoardPage() {
         boardId={boardId}
         columnId={modalData.columnId!}
         cardId={modalData.cardId}
+        projectId={board?.projectId}
       />
 
       <BoardSettingsModal

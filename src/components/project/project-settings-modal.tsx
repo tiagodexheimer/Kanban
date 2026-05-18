@@ -2,20 +2,22 @@
 
 import React, { useState } from "react";
 import { Modal } from "@/components/ui/modal";
-import { Project, useUpdateProjectMember, useRemoveProjectMember, useDeleteProject, useUpdateProject, useInviteToProject } from "@/hooks/use-omnitask";
+import { Project, useUpdateProjectMember, useRemoveProjectMember, useDeleteProject, useUpdateProject, useInviteToProject, useCustomFields } from "@/hooks/use-omnitask";
 import { useBacklogs, useCreateBacklog, useDeleteBacklog, useUpdateBacklog } from "@/hooks/use-backlog";
-import { User, Trash2, Shield, Settings, Users, X, AlertTriangle, UserPlus, Inbox, Plus } from "lucide-react";
+import { User, Trash2, Shield, Settings, Users, X, AlertTriangle, UserPlus, Inbox, Plus, Hash, Type, Calendar, DollarSign, List } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ProjectSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   project: Project;
-  initialTab?: "geral" | "membros" | "backlogs";
+  initialTab?: "geral" | "membros" | "backlogs" | "campos";
   backlogsOnly?: boolean;
 }
 
 export function ProjectSettingsModal({ isOpen, onClose, project, initialTab = "membros", backlogsOnly }: ProjectSettingsModalProps) {
+  const queryClient = useQueryClient();
   const updateMember = useUpdateProjectMember();
   const removeMember = useRemoveProjectMember();
   const deleteProject = useDeleteProject();
@@ -27,7 +29,11 @@ export function ProjectSettingsModal({ isOpen, onClose, project, initialTab = "m
   const deleteBacklog = useDeleteBacklog(project.id);
   const updateBacklog = useUpdateBacklog(project.id);
 
-  const [activeTab, setActiveTab] = useState<"geral" | "membros" | "backlogs">(initialTab);
+  const { data: fields } = useCustomFields(project.id);
+  const [newFieldName, setNewFieldName] = useState("");
+  const [newFieldType, setNewFieldType] = useState("TEXT");
+
+  const [activeTab, setActiveTab] = useState<"geral" | "membros" | "backlogs" | "campos">(initialTab);
   const [title, setTitle] = useState(project.title);
   const [description, setDescription] = useState(project.description || "");
   const [inviteEmail, setInviteEmail] = useState("");
@@ -40,6 +46,7 @@ export function ProjectSettingsModal({ isOpen, onClose, project, initialTab = "m
       setActiveTab(initialTab);
       setTitle(project.title);
       setDescription(project.description || "");
+      setNewFieldName("");
       setNewBacklogTitle("");
       setEditingBacklogId(null);
     }
@@ -51,6 +58,28 @@ export function ProjectSettingsModal({ isOpen, onClose, project, initialTab = "m
     { value: "MEMBER", label: "Membro", desc: "Edita tarefas e boards" },
     { value: "VIEWER", label: "Observador", desc: "Apenas visualização" },
   ];
+
+  const handleAddField = async () => {
+    if (!newFieldName.trim()) return;
+    
+    await fetch(`/api/projects/${project.id}/fields`, {
+      method: "POST",
+      body: JSON.stringify({
+        name: newFieldName,
+        type: newFieldType,
+        options: newFieldType === "DROPDOWN" ? ["Opção 1"] : null
+      })
+    });
+    
+    setNewFieldName("");
+    queryClient.invalidateQueries({ queryKey: ["custom-fields", project.id] });
+  };
+
+  const handleDeleteField = async (fieldId: string) => {
+    if (!confirm("Deseja apagar este campo? Os valores salvos nos cards serão perdidos.")) return;
+    await fetch(`/api/projects/${project.id}/fields/${fieldId}`, { method: "DELETE" });
+    queryClient.invalidateQueries({ queryKey: ["custom-fields", project.id] });
+  };
 
   const handleUpdate = () => {
     updateProject.mutate({ id: project.id, title, description }, {
@@ -106,6 +135,12 @@ export function ProjectSettingsModal({ isOpen, onClose, project, initialTab = "m
               className={cn("px-4 py-2 text-sm font-medium border-b-2 transition-all", activeTab === "backlogs" ? "border-primary text-primary" : "border-transparent text-muted-foreground")}
             >
               Backlogs
+            </button>
+            <button 
+              onClick={() => setActiveTab("campos")}
+              className={cn("px-4 py-2 text-sm font-medium border-b-2 transition-all", activeTab === "campos" ? "border-primary text-primary" : "border-transparent text-muted-foreground")}
+            >
+              Campos Customizados
             </button>
           </div>
         )}
@@ -221,7 +256,7 @@ export function ProjectSettingsModal({ isOpen, onClose, project, initialTab = "m
                 ))}
               </div>
             </div>
-          ) : (
+          ) : activeTab === "backlogs" ? (
             /* BACKLOGS TAB */
             <div className="space-y-4">
               <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl space-y-3">
@@ -327,7 +362,62 @@ export function ProjectSettingsModal({ isOpen, onClose, project, initialTab = "m
                 )}
               </div>
             </div>
-          )}
+          ) : activeTab === "campos" ? (
+            <div className="space-y-6">
+              <div>
+                <div className="space-y-2 mb-4">
+                  {fields?.map((field: any) => (
+                    <div key={field.id} className="flex items-center justify-between p-3 bg-accent/20 rounded-xl border border-border/50">
+                      <div className="flex items-center gap-3">
+                        {getFieldIcon(field.type)}
+                        <div>
+                          <p className="text-sm font-bold">{field.name}</p>
+                          <p className="text-[10px] text-muted-foreground uppercase">{field.type}</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => handleDeleteField(field.id)}
+                        className="p-1.5 text-muted-foreground hover:text-destructive transition-colors"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="p-4 bg-accent/30 rounded-2xl space-y-4">
+                  <p className="text-xs font-bold text-muted-foreground uppercase">Adicionar Novo Campo</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input 
+                      type="text" 
+                      placeholder="Nome do campo"
+                      value={newFieldName}
+                      onChange={(e) => setNewFieldName(e.target.value)}
+                      className="bg-background border border-border rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+                    />
+                    <select 
+                      value={newFieldType}
+                      onChange={(e) => setNewFieldType(e.target.value)}
+                      className="bg-background border border-border rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <option value="TEXT">Texto</option>
+                      <option value="NUMBER">Número</option>
+                      <option value="DATE">Data</option>
+                      <option value="CURRENCY">Moeda</option>
+                      <option value="DROPDOWN">Seleção</option>
+                    </select>
+                  </div>
+                  <button 
+                    onClick={handleAddField}
+                    className="w-full flex items-center justify-center gap-2 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-bold hover:opacity-90 transition-all"
+                  >
+                    <Plus size={16} />
+                    Criar Campo
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </div>
 
         <div className="mt-6 flex justify-end">
@@ -342,4 +432,16 @@ export function ProjectSettingsModal({ isOpen, onClose, project, initialTab = "m
       </div>
     </Modal>
   );
+}
+
+function getFieldIcon(type: string) {
+  const props = { size: 16, className: "text-primary" };
+  switch (type) {
+    case "NUMBER": return <Hash {...props} />;
+    case "TEXT": return <Type {...props} />;
+    case "DATE": return <Calendar {...props} />;
+    case "CURRENCY": return <DollarSign {...props} />;
+    case "DROPDOWN": return <List {...props} />;
+    default: return <Type {...props} />;
+  }
 }

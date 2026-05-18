@@ -359,6 +359,7 @@ export default function ProjectBacklogPage() {
           cardId={activeCardId || undefined}
           boardId={boards?.[0]?.id}
           backlogId={activeBacklog?.id}
+          projectId={projectId}
         />
       )}
 

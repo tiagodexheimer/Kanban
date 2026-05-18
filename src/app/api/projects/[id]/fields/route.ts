@@ -8,18 +8,24 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: boardId } = await params;
+    const { id: projectId } = await params;
     const session = await getServerSession(authOptions);
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const board = await prisma.board.findUnique({
-      where: { id: boardId },
-      select: { projectId: true }
+    const userId = (session.user as any).id;
+
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      include: { members: true }
     });
-    if (!board || !board.projectId) return NextResponse.json([]);
+
+    if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
+
+    const isMember = project.ownerId === userId || project.members.some(m => m.userId === userId);
+    if (!isMember) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const fields = await prisma.customField.findMany({
-      where: { projectId: board.projectId },
+      where: { projectId },
       orderBy: { createdAt: "asc" }
     });
 
@@ -34,30 +40,36 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: boardId } = await params;
+    const { id: projectId } = await params;
     const session = await getServerSession(authOptions);
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    const userId = (session.user as any).id;
     const { name, type, options } = await request.json();
 
     if (!name || !type) {
       return NextResponse.json({ error: "Name and Type are required" }, { status: 400 });
     }
 
-    const board = await prisma.board.findUnique({
-      where: { id: boardId },
-      select: { projectId: true }
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      include: { members: true }
     });
-    if (!board || !board.projectId) {
-      return NextResponse.json({ error: "Board has no project" }, { status: 400 });
-    }
+
+    if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
+
+    const memberRecord = project.members.find(m => m.userId === userId);
+    const isOwner = project.ownerId === userId;
+    const canEdit = isOwner || (memberRecord && memberRecord.role !== "VIEWER");
+
+    if (!canEdit) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const field = await prisma.customField.create({
       data: {
         name,
         type,
         options: options ? JSON.stringify(options) : null,
-        projectId: board.projectId
+        projectId
       }
     });
 
