@@ -3,14 +3,15 @@
 import React, { useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import { Project, useUpdateProjectMember, useRemoveProjectMember, useDeleteProject, useUpdateProject, useInviteToProject } from "@/hooks/use-omnitask";
-import { User, Trash2, Shield, Settings, Users, X, AlertTriangle, UserPlus } from "lucide-react";
+import { useBacklogs, useCreateBacklog, useDeleteBacklog, useUpdateBacklog } from "@/hooks/use-backlog";
+import { User, Trash2, Shield, Settings, Users, X, AlertTriangle, UserPlus, Inbox, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ProjectSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   project: Project;
-  initialTab?: "geral" | "membros";
+  initialTab?: "geral" | "membros" | "backlogs";
 }
 
 export function ProjectSettingsModal({ isOpen, onClose, project, initialTab = "membros" }: ProjectSettingsModalProps) {
@@ -19,16 +20,27 @@ export function ProjectSettingsModal({ isOpen, onClose, project, initialTab = "m
   const deleteProject = useDeleteProject();
   const updateProject = useUpdateProject();
   const inviteMember = useInviteToProject();
-  const [activeTab, setActiveTab] = useState<"geral" | "membros">(initialTab);
+
+  const { data: backlogs } = useBacklogs(project.id);
+  const createBacklog = useCreateBacklog(project.id);
+  const deleteBacklog = useDeleteBacklog(project.id);
+  const updateBacklog = useUpdateBacklog(project.id);
+
+  const [activeTab, setActiveTab] = useState<"geral" | "membros" | "backlogs">(initialTab);
   const [title, setTitle] = useState(project.title);
   const [description, setDescription] = useState(project.description || "");
   const [inviteEmail, setInviteEmail] = useState("");
+  const [newBacklogTitle, setNewBacklogTitle] = useState("");
+  const [editingBacklogId, setEditingBacklogId] = useState<string | null>(null);
+  const [editingBacklogTitle, setEditingBacklogTitle] = useState("");
 
   React.useEffect(() => {
     if (isOpen) {
       setActiveTab(initialTab);
       setTitle(project.title);
       setDescription(project.description || "");
+      setNewBacklogTitle("");
+      setEditingBacklogId(null);
     }
   }, [isOpen, initialTab, project]);
 
@@ -63,6 +75,14 @@ export function ProjectSettingsModal({ isOpen, onClose, project, initialTab = "m
     });
   };
 
+  const handleCreateBacklog = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newBacklogTitle.trim()) return;
+    createBacklog.mutate({ title: newBacklogTitle.trim() }, {
+      onSuccess: () => setNewBacklogTitle("")
+    });
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={`Configurações: ${project.title}`} size="lg">
       <div className="flex flex-col h-full max-h-[70vh]">
@@ -78,6 +98,12 @@ export function ProjectSettingsModal({ isOpen, onClose, project, initialTab = "m
             className={cn("px-4 py-2 text-sm font-medium border-b-2 transition-all", activeTab === "membros" ? "border-primary text-primary" : "border-transparent text-muted-foreground")}
           >
             Membros
+          </button>
+          <button 
+            onClick={() => setActiveTab("backlogs")}
+            className={cn("px-4 py-2 text-sm font-medium border-b-2 transition-all", activeTab === "backlogs" ? "border-primary text-primary" : "border-transparent text-muted-foreground")}
+          >
+            Backlogs
           </button>
         </div>
 
@@ -122,7 +148,7 @@ export function ProjectSettingsModal({ isOpen, onClose, project, initialTab = "m
                 </div>
               </div>
             </div>
-          ) : (
+          ) : activeTab === "membros" ? (
             <div className="space-y-4">
               <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl space-y-3">
                 <h4 className="text-xs font-bold text-primary flex items-center gap-2">
@@ -190,6 +216,112 @@ export function ProjectSettingsModal({ isOpen, onClose, project, initialTab = "m
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          ) : (
+            /* BACKLOGS TAB */
+            <div className="space-y-4">
+              <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl space-y-3">
+                <h4 className="text-xs font-bold text-primary flex items-center gap-2">
+                  <Inbox size={14} />
+                  CRIAR NOVO BACKLOG
+                </h4>
+                <form onSubmit={handleCreateBacklog} className="flex gap-2">
+                  <input 
+                    type="text" 
+                    placeholder="Nome do backlog..."
+                    value={newBacklogTitle}
+                    onChange={(e) => setNewBacklogTitle(e.target.value)}
+                    required
+                    className="flex-1 bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  <button 
+                    type="submit"
+                    disabled={createBacklog.isPending}
+                    className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 transition-all disabled:opacity-50"
+                  >
+                    {createBacklog.isPending ? "Criando..." : "Criar"}
+                  </button>
+                </form>
+              </div>
+
+              <div className="flex items-center justify-between mt-6">
+                <h4 className="text-sm font-bold">Gerenciar Listas de Backlog ({backlogs?.length || 0})</h4>
+              </div>
+
+              <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                {!backlogs || backlogs.length === 0 ? (
+                  <div className="text-center py-8 text-xs text-muted-foreground italic border border-dashed border-border rounded-xl">
+                    Nenhum backlog neste projeto.
+                  </div>
+                ) : (
+                  backlogs.map((backlog) => (
+                    <div key={backlog.id} className="flex items-center justify-between p-3 rounded-xl bg-accent/30 border border-border/50">
+                      {editingBacklogId === backlog.id ? (
+                        <div className="flex-1 flex gap-2 mr-2">
+                          <input
+                            type="text"
+                            value={editingBacklogTitle}
+                            onChange={(e) => setEditingBacklogTitle(e.target.value)}
+                            className="flex-1 bg-background border border-border rounded-lg px-2.5 py-1.5 text-xs outline-none focus:ring-1 focus:ring-primary font-semibold"
+                          />
+                          <button
+                            onClick={() => {
+                              if (!editingBacklogTitle.trim()) return;
+                              updateBacklog.mutate({ backlogId: backlog.id, title: editingBacklogTitle.trim() }, {
+                                onSuccess: () => setEditingBacklogId(null)
+                              });
+                            }}
+                            className="bg-primary text-white px-2.5 py-1.5 rounded-lg text-[10px] font-bold hover:opacity-90 transition-all"
+                          >
+                            Salvar
+                          </button>
+                          <button
+                            onClick={() => setEditingBacklogId(null)}
+                            className="bg-accent text-foreground px-2.5 py-1.5 rounded-lg text-[10px] font-bold hover:opacity-90 transition-all"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          <Inbox size={16} className="text-primary shrink-0" />
+                          <div>
+                            <p className="text-sm font-bold">{backlog.title}</p>
+                            <span className="text-[10px] text-muted-foreground">
+                              {backlog.tasks?.length || 0} {backlog.tasks?.length === 1 ? "tarefa" : "tarefas"}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {editingBacklogId !== backlog.id && (
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            onClick={() => {
+                              setEditingBacklogId(backlog.id);
+                              setEditingBacklogTitle(backlog.title);
+                            }}
+                            className="px-2 py-1 hover:bg-primary/20 rounded text-xs font-bold text-primary transition-all"
+                          >
+                            Renomear
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm(`Tem certeza que deseja excluir o backlog "${backlog.title}" e todas as suas tarefas?`)) {
+                                deleteBacklog.mutate(backlog.id);
+                              }
+                            }}
+                            className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-all"
+                            title="Excluir backlog"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           )}

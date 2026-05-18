@@ -94,7 +94,7 @@ export async function PATCH(
       }
     });
 
-    if (userId) {
+    if (userId && oldCard.column) {
       if (rest.columnId && rest.columnId !== oldCard.columnId) {
         const newColumn = await prisma.column.findUnique({ where: { id: rest.columnId } });
         await logActivity({
@@ -136,7 +136,7 @@ export async function DELETE(
       include: { column: true }
     });
 
-    if (card && userId) {
+    if (card && userId && card.column) {
       await logActivity({
         type: "DELETE_CARD",
         description: `excluiu a tarefa "${card.title}"`,

@@ -92,6 +92,26 @@ export interface Board {
   project?: Project;
 }
 
+export interface BacklogTask {
+  id: string;
+  title: string;
+  description?: string | null;
+  priority: string;
+  dueDate?: string | Date | null;
+  backlogId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Backlog {
+  id: string;
+  title: string;
+  projectId: string;
+  createdAt: string;
+  updatedAt: string;
+  tasks: BacklogTask[];
+}
+
 export interface Project {
   id: string;
   title: string;
@@ -106,6 +126,7 @@ export interface Project {
   }[];
   boards?: Board[];
   folders?: Folder[];
+  backlogs?: Backlog[];
   updatedAt: string;
 }
 
@@ -184,6 +205,7 @@ export function useCreateProject() {
       title: string; 
       description?: string; 
       boardTitles?: string[]; 
+      backlogTitles?: string[]; 
       initialMembers?: string[]; 
     }) => {
       const res = await fetch("/api/projects", {

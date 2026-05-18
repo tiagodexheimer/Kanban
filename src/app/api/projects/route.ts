@@ -19,6 +19,7 @@ export async function GET() {
       },
       include: {
         boards: true,
+        backlogs: { include: { tasks: true } },
         folders: {
           include: { boards: true }
         },
@@ -58,7 +59,7 @@ export async function POST(request: Request) {
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await request.json();
-    const { title, description, boardTitles, initialMembers } = body;
+    const { title, description, boardTitles, backlogTitles, initialMembers } = body;
 
     if (!title) return NextResponse.json({ error: "Title is required" }, { status: 400 });
 
@@ -109,6 +110,19 @@ export async function POST(request: Request) {
                 { title: "Done", position: 3, type: "DONE", color: "#22c55e" },
               ],
             },
+          }
+        });
+      }
+    }
+
+    // Create initial backlogs if requested
+    if (backlogTitles && Array.isArray(backlogTitles) && backlogTitles.length > 0) {
+      for (const backlogTitle of backlogTitles) {
+        if (!backlogTitle || !backlogTitle.trim()) continue;
+        await prisma.backlog.create({
+          data: {
+            title: backlogTitle.trim(),
+            projectId: project.id
           }
         });
       }

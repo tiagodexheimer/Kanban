@@ -18,6 +18,7 @@ export async function GET(
     const project = await prisma.project.findUnique({
       where: { id: projectId },
       include: {
+        backlogs: { include: { tasks: true } },
         boards: {
           include: {
             columns: {

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { 
   Star,
   Search,
@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { useBoards, useCreateBoard, useProjects, useCreateProject, useInviteToProject, useCreateFolder } from "@/hooks/use-omnitask";
 import { useViewStore } from "@/store/use-view-store";
 import { toast } from "sonner";
-import { Folder, ChevronDown, Users, UserPlus, FolderPlus } from "lucide-react";
+import { Folder, ChevronDown, Users, UserPlus, FolderPlus, Inbox } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import { ProjectSettingsModal } from "../project/project-settings-modal";
 import { CreateBoardModal } from "../board/create-board-modal";
@@ -46,6 +46,103 @@ export function Sidebar() {
   const [isCreateBoardOpen, setIsCreateBoardOpen] = useState(false);
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
   const [createBoardParams, setCreateBoardParams] = useState<{ projectId?: string; folderId?: string }>({});
+  const [sidebarOrderUpdateTrigger, setSidebarOrderUpdateTrigger] = useState(0);
+  const [draggedSidebarItem, setDraggedSidebarItem] = useState<{ projectId: string; key: string } | null>(null);
+  const [dragOverSidebarKey, setDragOverSidebarKey] = useState<string | null>(null);
+
+  // Get combined, ordered list of direct boards and backlogs
+  const getOrderedItems = (project: any) => {
+    const directBoards = project.boards?.filter((b: any) => !b.folderId) || [];
+    const directBacklogs = project.backlogs || [];
+    
+    // Combine them with unique type prefix
+    const items = [
+      ...directBoards.map((b: any) => ({ ...b, sidebarType: "board" })),
+      ...directBacklogs.map((b: any) => ({ ...b, sidebarType: "backlog" }))
+    ];
+    
+    // Load saved order from localStorage
+    if (typeof window !== "undefined") {
+      const savedOrderJson = localStorage.getItem(`sidebar-order-${project.id}`);
+      if (savedOrderJson) {
+        try {
+          const savedOrder = JSON.parse(savedOrderJson) as string[];
+          // Sort items based on savedOrder index
+          return items.sort((a, b) => {
+            const keyA = `${a.sidebarType}-${a.id}`;
+            const keyB = `${b.sidebarType}-${b.id}`;
+            const indexA = savedOrder.indexOf(keyA);
+            const indexB = savedOrder.indexOf(keyB);
+            
+            if (indexA === -1 && indexB === -1) return 0;
+            if (indexA === -1) return 1;
+            if (indexB === -1) return -1;
+            return indexA - indexB;
+          });
+        } catch (e) {
+          console.error("Error parsing sidebar order:", e);
+        }
+      }
+    }
+    return items;
+  };
+
+  const handleSidebarDragStart = (e: React.DragEvent<any>, projectId: string, key: string) => {
+    e.dataTransfer.setData("sidebarItemKey", key);
+    e.dataTransfer.setData("sidebarProjectId", projectId);
+    setDraggedSidebarItem({ projectId, key });
+  };
+
+  const handleSidebarDragOver = (e: React.DragEvent<any>, projectId: string) => {
+    if (draggedSidebarItem && draggedSidebarItem.projectId === projectId) {
+      e.preventDefault();
+    }
+  };
+
+  const handleSidebarDragEnter = (e: React.DragEvent<any>, key: string) => {
+    setDragOverSidebarKey(key);
+  };
+
+  const handleSidebarDragLeave = () => {
+    setDragOverSidebarKey(null);
+  };
+
+  const handleSidebarDrop = (e: React.DragEvent<any>, projectId: string, targetKey: string) => {
+    e.preventDefault();
+    const sourceKey = e.dataTransfer.getData("sidebarItemKey");
+    const sourceProjectId = e.dataTransfer.getData("sidebarProjectId");
+    
+    if (sourceProjectId !== projectId || sourceKey === targetKey) {
+      setDragOverSidebarKey(null);
+      setDraggedSidebarItem(null);
+      return;
+    }
+    
+    const project = projects?.find(p => p.id === projectId);
+    if (!project) {
+      setDragOverSidebarKey(null);
+      setDraggedSidebarItem(null);
+      return;
+    }
+    
+    const orderedItems = getOrderedItems(project);
+    const itemKeys = orderedItems.map(item => `${item.sidebarType}-${item.id}`);
+    
+    const sourceIndex = itemKeys.indexOf(sourceKey);
+    const targetIndex = itemKeys.indexOf(targetKey);
+    
+    if (sourceIndex !== -1 && targetIndex !== -1) {
+      const newKeys = [...itemKeys];
+      newKeys.splice(sourceIndex, 1);
+      newKeys.splice(targetIndex, 0, sourceKey);
+      
+      localStorage.setItem(`sidebar-order-${projectId}`, JSON.stringify(newKeys));
+      setSidebarOrderUpdateTrigger(prev => prev + 1);
+    }
+    
+    setDragOverSidebarKey(null);
+    setDraggedSidebarItem(null);
+  };
 
   const toggleProject = (projectId: string) => {
     setExpandedProjects(prev => 
@@ -91,6 +188,7 @@ export function Sidebar() {
 
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const topNavItems: { icon: any; label: string; path?: string }[] = [
     { icon: Star, label: "Favoritos" },
@@ -322,24 +420,64 @@ export function Sidebar() {
                             </div>
                           ))}
 
-                          {/* Direct Boards in Project */}
-                          {project.boards?.filter(b => !b.folderId).map((board) => (
-                            <button
-                              key={board.id}
-                              onClick={() => handleBoardClick(board.id)}
-                              className={cn(
-                                "w-full flex items-center gap-3 p-1.5 rounded-lg text-[13px] transition-all",
-                                activeBoardId === board.id 
-                                  ? "bg-primary/10 text-primary font-medium" 
-                                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                              )}
-                            >
-                              <LayoutDashboard size={12} />
-                              <span className="truncate">{board.title}</span>
-                            </button>
-                          ))}
-                          {(project.boards?.length || 0) === 0 && (project.folders?.length || 0) === 0 && (
-                            <div className="px-2 py-1 text-[10px] text-muted-foreground italic">Nenhum quadro</div>
+                          {/* Ordered Direct Boards and Backlogs in Project */}
+                          {getOrderedItems(project).map((item: any) => {
+                            const itemKey = `${item.sidebarType}-${item.id}`;
+                            const isDraggedOver = dragOverSidebarKey === itemKey;
+                            
+                            if (item.sidebarType === "board") {
+                              return (
+                                <button
+                                  key={item.id}
+                                  draggable
+                                  onDragStart={(e) => handleSidebarDragStart(e, project.id, itemKey)}
+                                  onDragOver={(e) => handleSidebarDragOver(e, project.id)}
+                                  onDragEnter={(e) => handleSidebarDragEnter(e, itemKey)}
+                                  onDragLeave={handleSidebarDragLeave}
+                                  onDrop={(e) => handleSidebarDrop(e, project.id, itemKey)}
+                                  onClick={() => handleBoardClick(item.id)}
+                                  className={cn(
+                                    "w-full flex items-center gap-3 p-1.5 rounded-lg text-[13px] transition-all cursor-grab active:cursor-grabbing border border-transparent",
+                                    activeBoardId === item.id 
+                                      ? "bg-primary/10 text-primary font-medium" 
+                                      : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                                    isDraggedOver ? "border-t-primary border-t-2 pt-1 bg-primary/5" : ""
+                                  )}
+                                >
+                                  <LayoutDashboard size={12} className="shrink-0" />
+                                  <span className="truncate flex-1 text-left">{item.title}</span>
+                                </button>
+                              );
+                            } else {
+                              return (
+                                <button
+                                  key={item.id}
+                                  draggable
+                                  onDragStart={(e) => handleSidebarDragStart(e, project.id, itemKey)}
+                                  onDragOver={(e) => handleSidebarDragOver(e, project.id)}
+                                  onDragEnter={(e) => handleSidebarDragEnter(e, itemKey)}
+                                  onDragLeave={handleSidebarDragLeave}
+                                  onDrop={(e) => handleSidebarDrop(e, project.id, itemKey)}
+                                  onClick={() => {
+                                    router.push(`/projects/${project.id}/backlog?backlogId=${item.id}`);
+                                  }}
+                                  className={cn(
+                                    "w-full flex items-center gap-3 p-1.5 rounded-lg text-[13px] transition-all cursor-grab active:cursor-grabbing border border-transparent",
+                                    pathname === `/projects/${project.id}/backlog` && searchParams.get("backlogId") === item.id
+                                      ? "bg-primary/10 text-primary font-medium" 
+                                      : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                                    isDraggedOver ? "border-t-primary border-t-2 pt-1 bg-primary/5" : ""
+                                  )}
+                                >
+                                  <Inbox size={12} className="text-primary/70 shrink-0" />
+                                  <span className="truncate text-left flex-1">{item.title}</span>
+                                </button>
+                              );
+                            }
+                          })}
+
+                          {(project.boards?.length || 0) === 0 && (project.folders?.length || 0) === 0 && (project.backlogs?.length || 0) === 0 && (
+                            <div className="px-2 py-1 text-[10px] text-muted-foreground italic">Nenhum quadro ou backlog</div>
                           )}
                         </div>
                       )}

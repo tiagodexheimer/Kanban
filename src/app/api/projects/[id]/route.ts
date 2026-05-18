@@ -18,6 +18,7 @@ export async function GET(
       where: { id },
       include: {
         boards: true,
+        backlogs: { include: { tasks: true } },
         folders: { include: { boards: true } },
         members: { include: { user: true } },
         owner: true

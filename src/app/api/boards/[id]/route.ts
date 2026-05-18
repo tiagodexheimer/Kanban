@@ -21,7 +21,6 @@ export async function GET(
       where: { id },
       include: {
         tags: true,
-        customFields: true,
         owner: {
           select: { id: true, name: true, image: true }
         },
@@ -51,6 +50,7 @@ export async function GET(
           select: {
             id: true,
             ownerId: true,
+            customFields: true,
             members: {
               select: { 
                 role: true,
@@ -102,7 +102,12 @@ export async function GET(
       canManageBoard: isOwner || isProjectAdmin || !!userPermission?.canManageBoard,
     };
 
-    return NextResponse.json({ ...board, allCards, userPermissions: permissions });
+    return NextResponse.json({ 
+      ...board, 
+      customFields: board.project?.customFields || [], 
+      allCards, 
+      userPermissions: permissions 
+    });
   } catch (error) {
     console.error("Error fetching board:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

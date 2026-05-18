@@ -2,28 +2,48 @@ import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { logActivity } from "@/lib/activity-log";
 
-export async function POST(request: Request) {
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<{ id: string; backlogId: string }> }
+) {
   try {
+    const { backlogId } = await params;
     const session = await getServerSession(authOptions);
-    const userId = (session?.user as any)?.id;
+    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     const body = await request.json();
-    const { title, columnId, position, description, priority, dueDate, tagIds, assigneeIds, parentId, blockedByIds, blockingIds, relatedToIds, checklists, customFieldValues } = body;
+    const { 
+      title, 
+      description, 
+      priority, 
+      dueDate, 
+      tagIds, 
+      assigneeIds, 
+      parentId, 
+      blockedByIds, 
+      blockingIds, 
+      relatedToIds, 
+      checklists, 
+      customFieldValues 
+    } = body;
 
-    const column = columnId ? await prisma.column.findUnique({
-      where: { id: columnId },
-      select: { boardId: true }
-    }) : null;
+    if (!title) return NextResponse.json({ error: "Title is required" }, { status: 400 });
 
-    const card = await prisma.card.create({
+    const lastCard = await prisma.card.findFirst({
+      where: { backlogId },
+      orderBy: { position: "desc" }
+    });
+    const position = lastCard ? lastCard.position + 1 : 1;
+
+    const task = await prisma.card.create({
       data: {
         title,
-        columnId,
-        position: position || 0,
-        description,
+        description: description || null,
         priority: priority || "Medium",
         dueDate: dueDate ? new Date(dueDate) : null,
+        backlogId,
+        position,
         parentId,
         tags: tagIds ? {
           connect: tagIds.map((id: string) => ({ id }))
@@ -58,23 +78,14 @@ export async function POST(request: Request) {
         tags: true,
         assignees: true,
         checklists: true,
-        customFieldValues: true,
+        comments: true,
+        customFieldValues: true
       }
     });
 
-    if (userId && column?.boardId) {
-      await logActivity({
-        type: "CREATE_CARD",
-        description: `criou a tarefa "${title}"`,
-        userId,
-        boardId: column.boardId,
-        cardId: card.id
-      });
-    }
-
-    return NextResponse.json(card, { status: 201 });
+    return NextResponse.json(task, { status: 201 });
   } catch (error) {
-    console.error("Error creating card:", error);
+    console.error("Error creating backlog task:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

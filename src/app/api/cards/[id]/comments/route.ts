@@ -70,7 +70,7 @@ export async function POST(
       include: { column: true }
     });
     
-    if (card) {
+    if (card && card.column) {
       await logActivity({
         type: "ADD_COMMENT",
         description: `comentou na tarefa "${card.title}"`,

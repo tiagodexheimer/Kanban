@@ -78,7 +78,7 @@ export async function GET(
       // Remaining tasks at the end of this day
       const totalCreatedUntilNow = allCards.filter(c => c.createdAt <= dayEnd).length;
       const totalDoneUntilNow = allCards.filter(c => 
-        doneColumnIds.includes(c.columnId) && 
+        (c.columnId ? doneColumnIds.includes(c.columnId) : false) && 
         c.updatedAt <= dayEnd
       ).length;
 
@@ -136,7 +136,7 @@ export async function GET(
       // Productivity (only for past and today)
       if (dayStart <= new Date()) {
         const completedCount = allCards.filter(c => 
-          doneColumnIds.includes(c.columnId) && 
+          (c.columnId ? doneColumnIds.includes(c.columnId) : false) && 
           c.updatedAt >= dayStart && 
           c.updatedAt <= dayEnd
         ).length;
@@ -148,7 +148,7 @@ export async function GET(
       }
     });
 
-    const totalDoneTasks = allCards.filter(c => doneColumnIds.includes(c.columnId)).length;
+    const totalDoneTasks = allCards.filter(c => c.columnId ? doneColumnIds.includes(c.columnId) : false).length;
 
     return NextResponse.json({
       statusDistribution,

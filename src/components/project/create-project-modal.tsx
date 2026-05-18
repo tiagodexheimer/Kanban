@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Modal } from "../ui/modal";
 import { useCreateProject } from "@/hooks/use-omnitask";
 import { useRouter } from "next/navigation";
-import { Plus, X, Users, Mail, LayoutGrid } from "lucide-react";
+import { Plus, X, Users, Mail, LayoutGrid, Inbox } from "lucide-react";
 import { toast } from "sonner";
 
 interface CreateProjectModalProps {
@@ -18,6 +18,7 @@ export function CreateProjectModal({ isOpen, onClose }: CreateProjectModalProps)
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [boardTitles, setBoardTitles] = useState<string[]>(["Quadro Geral"]);
+  const [backlogTitles, setBacklogTitles] = useState<string[]>(["Backlog Geral"]);
   const [emailInput, setEmailInput] = useState("");
   const [emails, setEmails] = useState<string[]>([]);
 
@@ -27,6 +28,7 @@ export function CreateProjectModal({ isOpen, onClose }: CreateProjectModalProps)
       setTitle("");
       setDescription("");
       setBoardTitles(["Quadro Geral"]);
+      setBacklogTitles(["Backlog Geral"]);
       setEmailInput("");
       setEmails([]);
     }
@@ -60,6 +62,7 @@ export function CreateProjectModal({ isOpen, onClose }: CreateProjectModalProps)
       title,
       description,
       boardTitles,
+      backlogTitles,
       initialMembers: emails,
     }, {
       onSuccess: (data) => {
@@ -144,6 +147,60 @@ export function CreateProjectModal({ isOpen, onClose }: CreateProjectModalProps)
                     <button
                       type="button"
                       onClick={() => setBoardTitles(boardTitles.filter((_, i) => i !== index))}
+                      className="p-1.5 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-500 transition-colors shrink-0"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Initial Backlogs List and Naming */}
+          <div className="space-y-3 border-t border-border/50 pt-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Inbox size={16} />
+                <label className="text-xs font-bold uppercase tracking-wide">Backlogs do Projeto</label>
+              </div>
+              <button
+                type="button"
+                onClick={() => setBacklogTitles([...backlogTitles, `Backlog ${backlogTitles.length + 1}`])}
+                className="px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95 shrink-0"
+              >
+                <Plus size={14} />
+                Adicionar Backlog
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground -mt-1">Crie e nomeie listas de backlog para armazenar ideias e tarefas futuras fora dos quadros ativos.</p>
+
+            {backlogTitles.length === 0 ? (
+              <div className="text-center py-6 border border-dashed border-border rounded-xl text-muted-foreground text-xs font-medium">
+                Nenhum backlog inicial.
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
+                {backlogTitles.map((backlogTitle, index) => (
+                  <div key={index} className="flex items-center gap-3 bg-accent/20 p-2 rounded-xl border border-border/50">
+                    <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary/10 text-primary font-bold text-xs shrink-0">
+                      {index + 1}
+                    </div>
+                    <input 
+                      type="text" 
+                      placeholder="Nome do backlog..."
+                      value={backlogTitle}
+                      onChange={(e) => {
+                        const newTitles = [...backlogTitles];
+                        newTitles[index] = e.target.value;
+                        setBacklogTitles(newTitles);
+                      }}
+                      required
+                      className="bg-background border border-border rounded-lg px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-primary flex-1 font-semibold"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setBacklogTitles(backlogTitles.filter((_, i) => i !== index))}
                       className="p-1.5 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-500 transition-colors shrink-0"
                     >
                       <X size={14} />
