@@ -405,7 +405,7 @@ export function Sidebar() {
                                       onClick={() => handleBoardClick(board.id)}
                                       className={cn(
                                         "w-full flex items-center gap-3 p-1.5 rounded-lg text-[13px] transition-all",
-                                        activeBoardId === board.id 
+                                        pathname.startsWith("/boards") && activeBoardId === board.id 
                                           ? "bg-primary/10 text-primary font-medium" 
                                           : "text-muted-foreground hover:bg-accent hover:text-foreground"
                                       )}
@@ -440,7 +440,7 @@ export function Sidebar() {
                                   onClick={() => handleBoardClick(item.id)}
                                   className={cn(
                                     "w-full flex items-center gap-3 p-1.5 rounded-lg text-[13px] transition-all cursor-grab active:cursor-grabbing border border-transparent",
-                                    activeBoardId === item.id 
+                                    pathname.startsWith("/boards") && activeBoardId === item.id 
                                       ? "bg-primary/10 text-primary font-medium" 
                                       : "text-muted-foreground hover:bg-accent hover:text-foreground",
                                     isDraggedOver ? "border-t-primary border-t-2 pt-1 bg-primary/5" : ""
@@ -529,7 +529,7 @@ export function Sidebar() {
                   onClick={() => handleBoardClick(board.id)}
                   className={cn(
                     "w-full flex items-center gap-3 p-2 rounded-lg transition-all",
-                    activeBoardId === board.id || (!activeBoardId && boards.filter(b => !b.projectId)[0]?.id === board.id)
+                    pathname.startsWith("/boards") && (activeBoardId === board.id || (!activeBoardId && boards.filter(b => !b.projectId)[0]?.id === board.id))
                       ? "bg-primary/10 text-primary" 
                       : "text-muted-foreground hover:bg-accent hover:text-foreground"
                   )}
