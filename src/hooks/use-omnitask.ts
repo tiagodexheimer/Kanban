@@ -455,6 +455,7 @@ export function useCreateCard() {
       blockingIds?: string[];
       relatedToIds?: string[];
       checklists?: { text: string; completed: boolean; position: number }[];
+      customFieldValues?: { customFieldId: string; value: string }[];
     }) => {
       const res = await fetch("/api/cards", {
         method: "POST",
@@ -927,10 +928,11 @@ export function useCustomFields(boardId: string) {
   });
 }
 
-export function useUpdateCustomValue(cardId: string) {
+export function useUpdateCustomValue(cardId?: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: { customFieldId: string; value: string }) => {
+      if (!cardId) throw new Error("Card ID is required");
       const res = await fetch(`/api/cards/${cardId}/values`, {
         method: "POST",
         body: JSON.stringify(data),
@@ -940,6 +942,9 @@ export function useUpdateCustomValue(cardId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["board"] });
       queryClient.invalidateQueries({ queryKey: ["board-stats"] });
+      if (cardId) {
+        queryClient.invalidateQueries({ queryKey: ["card", cardId] });
+      }
     },
   });
 }

@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     const session = await getServerSession(authOptions);
     const userId = (session?.user as any)?.id;
     const body = await request.json();
-    const { title, columnId, position, description, priority, dueDate, tagIds, assigneeIds, parentId, blockedByIds, blockingIds, relatedToIds, checklists } = body;
+    const { title, columnId, position, description, priority, dueDate, tagIds, assigneeIds, parentId, blockedByIds, blockingIds, relatedToIds, checklists, customFieldValues } = body;
 
     const column = await prisma.column.findUnique({
       where: { id: columnId },
@@ -47,11 +47,18 @@ export async function POST(request: Request) {
             position: item.position || 0
           }))
         } : undefined,
+        customFieldValues: customFieldValues ? {
+          create: customFieldValues.map((item: any) => ({
+            customFieldId: item.customFieldId,
+            value: item.value
+          }))
+        } : undefined,
       },
       include: {
         tags: true,
         assignees: true,
         checklists: true,
+        customFieldValues: true,
       }
     });
 

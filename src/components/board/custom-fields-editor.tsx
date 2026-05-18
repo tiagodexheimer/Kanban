@@ -2,16 +2,16 @@
 
 import React, { useState, useEffect } from "react";
 import { CustomField, CustomFieldValue, useUpdateCustomValue } from "@/hooks/use-omnitask";
-import { cn } from "@/lib/utils";
 import { Hash, Type, Calendar as CalendarIcon, DollarSign, List } from "lucide-react";
 
 interface CustomFieldsEditorProps {
-  cardId: string;
+  cardId?: string;
   fields: CustomField[];
-  values: CustomFieldValue[];
+  values: any[];
+  onChange?: (customFieldId: string, value: string) => void;
 }
 
-export function CustomFieldsEditor({ cardId, fields, values }: CustomFieldsEditorProps) {
+export function CustomFieldsEditor({ cardId, fields, values, onChange }: CustomFieldsEditorProps) {
   if (fields.length === 0) return null;
 
   // Remove duplicates by ID just in case
@@ -27,6 +27,7 @@ export function CustomFieldsEditor({ cardId, fields, values }: CustomFieldsEdito
             cardId={cardId}
             field={field}
             initialValue={values.find(v => v.customFieldId === field.id)?.value || ""}
+            onChange={onChange}
           />
         ))}
       </div>
@@ -35,12 +36,13 @@ export function CustomFieldsEditor({ cardId, fields, values }: CustomFieldsEdito
 }
 
 interface FieldInputProps {
-  cardId: string;
+  cardId?: string;
   field: CustomField;
   initialValue: string;
+  onChange?: (customFieldId: string, value: string) => void;
 }
 
-function FieldInput({ cardId, field, initialValue }: FieldInputProps) {
+function FieldInput({ cardId, field, initialValue, onChange }: FieldInputProps) {
   const [value, setValue] = useState(initialValue);
   const updateValueMutation = useUpdateCustomValue(cardId);
 
@@ -51,7 +53,11 @@ function FieldInput({ cardId, field, initialValue }: FieldInputProps) {
 
   const handleBlur = () => {
     if (value !== initialValue) {
-      updateValueMutation.mutate({ customFieldId: field.id, value });
+      if (cardId) {
+        updateValueMutation.mutate({ customFieldId: field.id, value });
+      } else if (onChange) {
+        onChange(field.id, value);
+      }
     }
   };
 
@@ -75,7 +81,11 @@ function FieldInput({ cardId, field, initialValue }: FieldInputProps) {
           value={value}
           onChange={(e) => {
             setValue(e.target.value);
-            updateValueMutation.mutate({ customFieldId: field.id, value: e.target.value });
+            if (cardId) {
+              updateValueMutation.mutate({ customFieldId: field.id, value: e.target.value });
+            } else if (onChange) {
+              onChange(field.id, e.target.value);
+            }
           }}
           className="w-full bg-accent/30 border border-border/50 rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-primary transition-all"
         >
@@ -88,7 +98,12 @@ function FieldInput({ cardId, field, initialValue }: FieldInputProps) {
         <input
           type="date"
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => {
+            setValue(e.target.value);
+            if (!cardId && onChange) {
+              onChange(field.id, e.target.value);
+            }
+          }}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           className="w-full bg-accent/30 border border-border/50 rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-primary transition-all"
@@ -97,7 +112,12 @@ function FieldInput({ cardId, field, initialValue }: FieldInputProps) {
         <input
           type={field.type === "NUMBER" || field.type === "CURRENCY" ? "number" : "text"}
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => {
+            setValue(e.target.value);
+            if (!cardId && onChange) {
+              onChange(field.id, e.target.value);
+            }
+          }}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           placeholder={`Digite...`}

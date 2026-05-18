@@ -89,8 +89,19 @@ function CardForm({ card, columnId, onClose, boardTags, boardId, projectId, boar
   const [blockingIds, setBlockingIds] = useState<string[]>(card?.blocking?.map(d => d.id) || []);
   const [relatedToIds, setRelatedToIds] = useState<string[]>(card?.relatedTo?.map(d => d.id) || []);
   const [checklists, setChecklists] = useState<any[]>(card?.checklists || []);
+  const [customFieldValues, setCustomFieldValues] = useState<any[]>(card?.customFieldValues || []);
   
   const [activeTab, setActiveTab] = useState<"geral" | "historico">("geral");
+
+  const handleCustomFieldChange = (customFieldId: string, value: string) => {
+    setCustomFieldValues((prev) => {
+      const existingIndex = prev.findIndex((v) => v.customFieldId === customFieldId);
+      if (existingIndex > -1) {
+        return prev.map((v, i) => (i === existingIndex ? { ...v, value } : v));
+      }
+      return [...prev, { customFieldId, value }];
+    });
+  };
 
   const project = projects?.find(p => p.id === projectId);
   
@@ -151,7 +162,8 @@ function CardForm({ card, columnId, onClose, boardTags, boardId, projectId, boar
         blockedByIds,
         blockingIds,
         relatedToIds,
-        checklists: checklists.map(c => ({ text: c.text, completed: c.completed, position: c.position }))
+        checklists: checklists.map(c => ({ text: c.text, completed: c.completed, position: c.position })),
+        customFieldValues: customFieldValues.map(v => ({ customFieldId: v.customFieldId, value: v.value }))
       });
     }
     
@@ -342,11 +354,12 @@ function CardForm({ card, columnId, onClose, boardTags, boardId, projectId, boar
                 />
               )}
 
-              {card && board?.customFields && (
+              {board?.customFields && board.customFields.length > 0 && (
                 <CustomFieldsEditor 
-                  cardId={card.id}
+                  cardId={card?.id}
                   fields={board.customFields}
-                  values={card.customFieldValues || []}
+                  values={customFieldValues}
+                  onChange={handleCustomFieldChange}
                 />
               )}
 
