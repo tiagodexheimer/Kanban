@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 interface DependencyEditorProps {
   card?: Partial<Card>;
-  board: Board;
+  board?: Board;
   blockedByIds?: string[];
   blockingIds?: string[];
   relatedToIds?: string[];
@@ -31,7 +31,7 @@ export function DependencyEditor({
   const addDependencyMutation = useAddDependency();
   const updateCardMutation = useUpdateCard();
 
-  const allCards = board.columns.flatMap(c => c.cards);
+  const allCards = board?.columns?.flatMap(c => c.cards) || [];
   
   // Use props if available (creation mode), otherwise use card data (edit mode)
   const currentBlockedByIds = propBlockedByIds || card?.blockedBy?.map(d => d.id) || [];
