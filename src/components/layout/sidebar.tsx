@@ -334,38 +334,40 @@ export function Sidebar() {
                         }}
                       >
                         <Briefcase size={18} className="text-primary shrink-0" />
-                        <div className="flex-1 flex items-center justify-between min-w-0">
-                          <span className="font-semibold text-sm truncate">{project.title}</span>
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 shrink-0">
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); setSelectedProjectId(project.id); setActiveSettingsTab("geral"); }}
-                              className="p-1 hover:bg-primary/20 rounded text-primary"
-                              title="Configurações do projeto"
-                            >
-                              <Settings size={12} />
-                            </button>
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); setSelectedProjectId(project.id); setActiveSettingsTab("membros"); }}
-                              className="p-1 hover:bg-primary/20 rounded text-primary"
-                              title="Convidar membro"
-                            >
-                              <UserPlus size={12} />
-                            </button>
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); handleCreateFolder(project.id); }}
-                              className="p-1 hover:bg-primary/20 rounded text-primary"
-                              title="Nova pasta"
-                            >
-                              <FolderPlus size={12} />
-                            </button>
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); handleCreateBoard(project.id); }}
-                              className="p-1 hover:bg-primary/20 rounded text-primary"
-                              title="Novo quadro"
-                            >
-                              <Plus size={12} />
-                            </button>
-                            <ChevronDown size={14} className={cn("transition-transform", expandedProjects.includes(project.id) ? "rotate-180" : "")} />
+                        <div className="flex-1 flex items-center justify-between min-w-0 gap-1">
+                          <span className="font-semibold text-sm truncate flex-1">{project.title}</span>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <div className="hidden group-hover:flex items-center gap-1">
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); setSelectedProjectId(project.id); setActiveSettingsTab("geral"); }}
+                                className="p-1 hover:bg-primary/20 rounded text-primary"
+                                title="Configurações do projeto"
+                              >
+                                <Settings size={12} />
+                              </button>
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); setSelectedProjectId(project.id); setActiveSettingsTab("membros"); }}
+                                className="p-1 hover:bg-primary/20 rounded text-primary"
+                                title="Convidar membro"
+                              >
+                                <UserPlus size={12} />
+                              </button>
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); handleCreateFolder(project.id); }}
+                                className="p-1 hover:bg-primary/20 rounded text-primary"
+                                title="Nova pasta"
+                              >
+                                <FolderPlus size={12} />
+                              </button>
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); handleCreateBoard(project.id); }}
+                                className="p-1 hover:bg-primary/20 rounded text-primary"
+                                title="Novo quadro"
+                              >
+                                <Plus size={12} />
+                              </button>
+                            </div>
+                            <ChevronDown size={14} className={cn("transition-transform text-muted-foreground group-hover:text-primary", expandedProjects.includes(project.id) ? "rotate-180" : "")} />
                           </div>
                         </div>
                       </div>
