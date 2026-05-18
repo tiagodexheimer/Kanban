@@ -12,9 +12,10 @@ interface ProjectSettingsModalProps {
   onClose: () => void;
   project: Project;
   initialTab?: "geral" | "membros" | "backlogs";
+  backlogsOnly?: boolean;
 }
 
-export function ProjectSettingsModal({ isOpen, onClose, project, initialTab = "membros" }: ProjectSettingsModalProps) {
+export function ProjectSettingsModal({ isOpen, onClose, project, initialTab = "membros", backlogsOnly }: ProjectSettingsModalProps) {
   const updateMember = useUpdateProjectMember();
   const removeMember = useRemoveProjectMember();
   const deleteProject = useDeleteProject();
@@ -86,26 +87,28 @@ export function ProjectSettingsModal({ isOpen, onClose, project, initialTab = "m
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={`Configurações: ${project.title}`} size="lg">
       <div className="flex flex-col h-full max-h-[70vh]">
-        <div className="flex gap-4 border-b border-border mb-4">
-          <button 
-            onClick={() => setActiveTab("geral")}
-            className={cn("px-4 py-2 text-sm font-medium border-b-2 transition-all", activeTab === "geral" ? "border-primary text-primary" : "border-transparent text-muted-foreground")}
-          >
-            Geral
-          </button>
-          <button 
-            onClick={() => setActiveTab("membros")}
-            className={cn("px-4 py-2 text-sm font-medium border-b-2 transition-all", activeTab === "membros" ? "border-primary text-primary" : "border-transparent text-muted-foreground")}
-          >
-            Membros
-          </button>
-          <button 
-            onClick={() => setActiveTab("backlogs")}
-            className={cn("px-4 py-2 text-sm font-medium border-b-2 transition-all", activeTab === "backlogs" ? "border-primary text-primary" : "border-transparent text-muted-foreground")}
-          >
-            Backlogs
-          </button>
-        </div>
+        {!backlogsOnly && (
+          <div className="flex gap-4 border-b border-border mb-4">
+            <button 
+              onClick={() => setActiveTab("geral")}
+              className={cn("px-4 py-2 text-sm font-medium border-b-2 transition-all", activeTab === "geral" ? "border-primary text-primary" : "border-transparent text-muted-foreground")}
+            >
+              Geral
+            </button>
+            <button 
+              onClick={() => setActiveTab("membros")}
+              className={cn("px-4 py-2 text-sm font-medium border-b-2 transition-all", activeTab === "membros" ? "border-primary text-primary" : "border-transparent text-muted-foreground")}
+            >
+              Membros
+            </button>
+            <button 
+              onClick={() => setActiveTab("backlogs")}
+              className={cn("px-4 py-2 text-sm font-medium border-b-2 transition-all", activeTab === "backlogs" ? "border-primary text-primary" : "border-transparent text-muted-foreground")}
+            >
+              Backlogs
+            </button>
+          </div>
+        )}
 
         <div className="flex-1 overflow-y-auto pr-2">
           {activeTab === "geral" ? (

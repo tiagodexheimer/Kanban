@@ -364,7 +364,8 @@ export default function ProjectBacklogPage() {
         isOpen={isSettingsOpen} 
         onClose={() => setIsSettingsOpen(false)} 
         project={project as any} 
-        initialTab={settingsTab} 
+        initialTab="backlogs"
+        backlogsOnly={true}
       />
     </div>
   );
