@@ -10,18 +10,27 @@ interface ProjectSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   project: Project;
+  initialTab?: "geral" | "membros";
 }
 
-export function ProjectSettingsModal({ isOpen, onClose, project }: ProjectSettingsModalProps) {
+export function ProjectSettingsModal({ isOpen, onClose, project, initialTab = "membros" }: ProjectSettingsModalProps) {
   const updateMember = useUpdateProjectMember();
   const removeMember = useRemoveProjectMember();
   const deleteProject = useDeleteProject();
   const updateProject = useUpdateProject();
   const inviteMember = useInviteToProject();
-  const [activeTab, setActiveTab] = useState<"geral" | "membros">("membros");
+  const [activeTab, setActiveTab] = useState<"geral" | "membros">(initialTab);
   const [title, setTitle] = useState(project.title);
   const [description, setDescription] = useState(project.description || "");
   const [inviteEmail, setInviteEmail] = useState("");
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setActiveTab(initialTab);
+      setTitle(project.title);
+      setDescription(project.description || "");
+    }
+  }, [isOpen, initialTab, project]);
 
   const roles = [
     { value: "OWNER", label: "Dono", desc: "Controle total" },

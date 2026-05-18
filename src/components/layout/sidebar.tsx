@@ -41,6 +41,7 @@ export function Sidebar() {
   const [expandedFolders, setExpandedFolders] = useState<string[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [isProjectsSectionExpanded, setIsProjectsSectionExpanded] = useState(true);
+  const [activeSettingsTab, setActiveSettingsTab] = useState<"geral" | "membros">("geral");
 
   const toggleProject = (projectId: string) => {
     setExpandedProjects(prev => 
@@ -245,14 +246,14 @@ export function Sidebar() {
                           <span className="font-semibold text-sm truncate">{project.title}</span>
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 shrink-0">
                             <button 
-                              onClick={(e) => { e.stopPropagation(); setSelectedProjectId(project.id); }}
+                              onClick={(e) => { e.stopPropagation(); setSelectedProjectId(project.id); setActiveSettingsTab("geral"); }}
                               className="p-1 hover:bg-primary/20 rounded text-primary"
                               title="Configurações do projeto"
                             >
                               <Settings size={12} />
                             </button>
                             <button 
-                              onClick={(e) => { e.stopPropagation(); handleInvite(project.id); }}
+                              onClick={(e) => { e.stopPropagation(); setSelectedProjectId(project.id); setActiveSettingsTab("membros"); }}
                               className="p-1 hover:bg-primary/20 rounded text-primary"
                               title="Convidar membro"
                             >
@@ -479,6 +480,7 @@ export function Sidebar() {
           isOpen={!!selectedProjectId} 
           onClose={() => setSelectedProjectId(null)} 
           project={currentProject}
+          initialTab={activeSettingsTab}
         />
       )}
     </aside>
