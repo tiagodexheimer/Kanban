@@ -180,18 +180,30 @@ export function useProjects() {
 export function useCreateProject() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { title: string; description?: string }) => {
+    mutationFn: async (data: { 
+      title: string; 
+      description?: string; 
+      boardTitles?: string[]; 
+      initialMembers?: string[]; 
+    }) => {
       const res = await fetch("/api/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Failed to create project");
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to create project");
+      }
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["boards"] });
       toast.success("Projeto criado com sucesso!");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
     }
   });
 }

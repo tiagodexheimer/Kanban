@@ -27,6 +27,7 @@ import { Folder, ChevronDown, Users, UserPlus, FolderPlus } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import { ProjectSettingsModal } from "../project/project-settings-modal";
 import { CreateBoardModal } from "../board/create-board-modal";
+import { CreateProjectModal } from "../project/create-project-modal";
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -43,6 +44,7 @@ export function Sidebar() {
   const [isProjectsSectionExpanded, setIsProjectsSectionExpanded] = useState(true);
   const [activeSettingsTab, setActiveSettingsTab] = useState<"geral" | "membros">("geral");
   const [isCreateBoardOpen, setIsCreateBoardOpen] = useState(false);
+  const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
   const [createBoardParams, setCreateBoardParams] = useState<{ projectId?: string; folderId?: string }>({});
 
   const toggleProject = (projectId: string) => {
@@ -127,14 +129,8 @@ export function Sidebar() {
     });
   };
 
-  const handleCreateProject = async () => {
-    const title = prompt("Título do novo projeto:");
-    if (!title) return;
-
-    createProjectMutation.mutate({ 
-      title, 
-      description: "Novo projeto" 
-    });
+  const handleCreateProject = () => {
+    setIsCreateProjectOpen(true);
   };
 
   const currentProject = projects?.find(p => p.id === selectedProjectId);
@@ -486,6 +482,10 @@ export function Sidebar() {
         onClose={() => setIsCreateBoardOpen(false)}
         projectId={createBoardParams.projectId}
         folderId={createBoardParams.folderId}
+      />
+      <CreateProjectModal 
+        isOpen={isCreateProjectOpen}
+        onClose={() => setIsCreateProjectOpen(false)}
       />
     </aside>
   );
