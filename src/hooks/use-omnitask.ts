@@ -465,16 +465,89 @@ export function useCreateCard() {
       });
       return res.json();
     },
-    onSuccess: () => {
+    onMutate: async (newData) => {
+      // Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ["board"] });
+
+      // Snapshot the previous board data for any active boards
+      const previousBoards = queryClient.getQueriesData<Board>({ queryKey: ["board"] });
+
+      // Construct the optimistic card object
+      const optimisticCard: Card = {
+        id: `temp-${Date.now()}`,
+        title: newData.title,
+        description: newData.description || undefined,
+        position: newData.position || 0,
+        priority: (newData.priority as any) || "Medium",
+        columnId: newData.columnId,
+        dueDate: newData.dueDate ? new Date(newData.dueDate) : null,
+        tags: [],
+        assignees: [],
+        checklists: newData.checklists 
+          ? newData.checklists.map((c, i) => ({ id: `temp-chk-${i}`, text: c.text, completed: c.completed, position: c.position, cardId: "" }))
+          : [],
+        customFieldValues: newData.customFieldValues
+          ? newData.customFieldValues.map(v => ({ id: `temp-val-${v.customFieldId}`, value: v.value, customFieldId: v.customFieldId, cardId: "" }))
+          : [],
+        createdAt: new Date().toISOString(),
+      };
+
+      // Optimistically insert the new card into the correct column
+      queryClient.setQueriesData<Board>({ queryKey: ["board"] }, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          columns: old.columns.map((col) => {
+            if (col.id === newData.columnId) {
+              return {
+                ...col,
+                cards: [...col.cards, optimisticCard],
+              };
+            }
+            return col;
+          }),
+        };
+      });
+
+      return { previousBoards };
+    },
+    onError: (err, variables, context) => {
+      // Rollback to the previous state on error
+      if (context?.previousBoards) {
+        context.previousBoards.forEach(([queryKey, oldData]) => {
+          queryClient.setQueryData(queryKey, oldData);
+        });
+      }
+      toast.error("Erro ao criar tarefa");
+    },
+    onSuccess: (newRealCard) => {
+      // Replace the optimistic card with the real card in the cache
+      queryClient.setQueriesData<Board>({ queryKey: ["board"] }, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          columns: old.columns.map((col) => {
+            if (col.id === newRealCard.columnId) {
+              return {
+                ...col,
+                cards: col.cards.map((c) => 
+                  c.id.startsWith("temp-") && c.title === newRealCard.title ? newRealCard : c
+                ),
+              };
+            }
+            return col;
+          }),
+        };
+      });
+      toast.success("Tarefa criada com sucesso!");
+    },
+    onSettled: () => {
+      // Refetch board and statistics in background to ensure absolute sync
       queryClient.invalidateQueries({ queryKey: ["board"] });
       queryClient.invalidateQueries({ queryKey: ["boards"] });
       queryClient.invalidateQueries({ queryKey: ["board-stats"] });
       queryClient.invalidateQueries({ queryKey: ["project-stats"] });
-      toast.success("Tarefa criada com sucesso!");
     },
-    onError: () => {
-      toast.error("Erro ao criar tarefa");
-    }
   });
 }
 
