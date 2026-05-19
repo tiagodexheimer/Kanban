@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { ChecklistItem, useCreateChecklistItem, useUpdateChecklistItem, useDeleteChecklistItem } from "@/hooks/use-omnitask";
 import { CheckSquare, Square, Trash2, Plus, ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,124 @@ interface ChecklistEditorProps {
   items: any[];
   onChange?: (items: any[]) => void;
 }
+
+interface AutoResizeTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  value: string;
+}
+
+const AutoResizeTextarea = ({ value, className, onChange, onKeyDown, ...props }: AutoResizeTextareaProps) => {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const adjustHeight = () => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = "auto";
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  };
+
+  useEffect(() => {
+    adjustHeight();
+  }, [value]);
+
+  return (
+    <textarea
+      ref={textareaRef}
+      value={value}
+      onChange={onChange}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          if (onKeyDown) {
+            onKeyDown(e);
+          } else {
+            e.currentTarget.blur();
+          }
+        } else if (onKeyDown) {
+          onKeyDown(e);
+        }
+      }}
+      rows={1}
+      className={cn(
+        "flex-1 bg-transparent border-none p-0 text-sm focus:ring-0 outline-none transition-all resize-none overflow-hidden h-auto py-0.5",
+        className
+      )}
+      {...props}
+    />
+  );
+};
+
+interface ChecklistItemRowProps {
+  item: any;
+  cardId?: string;
+  onToggle: (item: any) => void;
+  onUpdateText: (item: any, text: string) => void;
+  onDelete: (id: string) => void;
+}
+
+const ChecklistItemRow = ({ item, cardId, onToggle, onUpdateText, onDelete }: ChecklistItemRowProps) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [tempText, setTempText] = useState(item.text);
+
+  useEffect(() => {
+    setTempText(item.text);
+  }, [item.text]);
+
+  const handleSave = () => {
+    setIsEditing(false);
+    const trimmed = tempText.trim();
+    if (trimmed && trimmed !== item.text) {
+      onUpdateText(item, trimmed);
+    } else {
+      setTempText(item.text);
+    }
+  };
+
+  return (
+    <div className="flex items-start gap-3 group py-1">
+      <button
+        type="button"
+        onClick={() => onToggle(item)}
+        className="text-muted-foreground hover:text-primary transition-colors mt-0.5"
+      >
+        {item.completed ? (
+          <CheckSquare size={18} className="text-primary" />
+        ) : (
+          <Square size={18} />
+        )}
+      </button>
+      {isEditing ? (
+        <AutoResizeTextarea
+          value={tempText}
+          autoFocus
+          onChange={(e) => setTempText((e.target as HTMLTextAreaElement).value)}
+          onBlur={handleSave}
+          className={cn(
+            "flex-1 bg-transparent border-none p-0 text-sm focus:ring-0 outline-none transition-all",
+            item.completed && "line-through text-muted-foreground"
+          )}
+        />
+      ) : (
+        <span
+          onClick={() => setIsEditing(true)}
+          className={cn(
+            "flex-1 text-sm py-0.5 cursor-pointer hover:bg-accent/30 rounded px-1 transition-all break-words select-text",
+            item.completed && "line-through text-muted-foreground"
+          )}
+        >
+          {item.text}
+        </span>
+      )}
+      <button
+        type="button"
+        onClick={() => onDelete(item.id)}
+        className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-all mt-0.5"
+      >
+        <Trash2 size={14} />
+      </button>
+    </div>
+  );
+};
 
 export function ChecklistEditor({ cardId, items, onChange }: ChecklistEditorProps) {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -86,45 +204,23 @@ export function ChecklistEditor({ cardId, items, onChange }: ChecklistEditorProp
           {/* Lista de Itens */}
           <div className="space-y-1">
             {items.map((item) => (
-              <div key={item.id} className="flex items-center gap-3 group">
-                <button
-                  type="button"
-                  onClick={() => handleToggleItem(item)}
-                  className="text-muted-foreground hover:text-primary transition-colors"
-                >
-                  {item.completed ? (
-                    <CheckSquare size={18} className="text-primary" />
-                  ) : (
-                    <Square size={18} />
-                  )}
-                </button>
-                <input
-                  type="text"
-                  value={item.text}
-                  onChange={(e) => handleUpdateText(item, e.target.value)}
-                  className={cn(
-                    "flex-1 bg-transparent border-none p-0 text-sm focus:ring-0 outline-none transition-all",
-                    item.completed && "line-through text-muted-foreground"
-                  )}
-                />
-                <button
-                  type="button"
-                  onClick={() => handleDeleteItem(item.id)}
-                  className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-all"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
+              <ChecklistItemRow
+                key={item.id}
+                item={item}
+                cardId={cardId}
+                onToggle={handleToggleItem}
+                onUpdateText={handleUpdateText}
+                onDelete={handleDeleteItem}
+              />
             ))}
           </div>
 
           {/* Novo Item */}
-          <div className="flex items-center gap-2 pl-7">
-            <input
-              type="text"
+          <div className="flex items-start gap-2 pl-7 py-1">
+            <AutoResizeTextarea
               placeholder="Adicionar item..."
               value={newItemText}
-              onChange={(e) => setNewItemText(e.target.value)}
+              onChange={(e) => setNewItemText((e.target as HTMLTextAreaElement).value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
@@ -137,7 +233,7 @@ export function ChecklistEditor({ cardId, items, onChange }: ChecklistEditorProp
               <button 
                 type="button"
                 onClick={handleAddItem}
-                className="p-1 bg-primary/10 text-primary rounded hover:bg-primary/20 transition-colors"
+                className="p-1 bg-primary/10 text-primary rounded hover:bg-primary/20 transition-colors mt-0.5"
               >
                 <Plus size={14} />
               </button>
@@ -148,3 +244,4 @@ export function ChecklistEditor({ cardId, items, onChange }: ChecklistEditorProp
     </div>
   );
 }
+

@@ -65,6 +65,17 @@ export async function POST(request: Request) {
 
     const userId = (session.user as any).id;
 
+    const userExists = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!userExists) {
+      return NextResponse.json(
+        { error: "User session is invalid or user was deleted. Please log out and register/sign in again." },
+        { status: 401 }
+      );
+    }
+
     const project = await prisma.project.create({
       data: {
         title,

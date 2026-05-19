@@ -885,6 +885,7 @@ export function useCreateChecklistItem() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["board"] });
+      queryClient.invalidateQueries({ queryKey: ["card"] });
     }
   });
 }
@@ -901,6 +902,7 @@ export function useUpdateChecklistItem() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["board"] });
+      queryClient.invalidateQueries({ queryKey: ["card"] });
     }
   });
 }
@@ -913,6 +915,7 @@ export function useDeleteChecklistItem() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["board"] });
+      queryClient.invalidateQueries({ queryKey: ["card"] });
     }
   });
 }

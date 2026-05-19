@@ -102,6 +102,12 @@ function CardForm({ card, columnId, backlogId, onClose, boardTags, boardId, proj
   const [checklists, setChecklists] = useState<any[]>(card?.checklists || []);
   const [customFieldValues, setCustomFieldValues] = useState<any[]>(card?.customFieldValues || []);
   
+  React.useEffect(() => {
+    if (card?.checklists) {
+      setChecklists(card.checklists);
+    }
+  }, [card?.checklists]);
+  
   const [activeTab, setActiveTab] = useState<"geral" | "historico">("geral");
 
   const handleCustomFieldChange = (customFieldId: string, value: string) => {
