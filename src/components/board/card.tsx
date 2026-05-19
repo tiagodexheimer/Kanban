@@ -4,7 +4,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Card as CardType } from "@/hooks/use-omnitask";
 import { cn } from "@/lib/utils";
-import { GripVertical, Calendar, CheckCircle2, ShieldAlert, Layers, Link as LinkIcon } from "lucide-react";
+import { GripVertical, Calendar, CheckCircle2, ShieldAlert, Layers, Link as LinkIcon, Clock } from "lucide-react";
 
 interface CardProps {
   card: CardType;
@@ -39,6 +39,20 @@ export function Card({ card, onClick, columnColor }: CardProps) {
   
   const isOverdue = card.dueDate && new Date(card.dueDate) < new Date();
   const formattedDate = card.dueDate ? new Date(card.dueDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : null;
+
+  const totalLoggedTime = card.timeLogs
+    ? card.timeLogs.filter(log => log.endTime !== null).reduce((sum, log) => sum + (log.duration || 0), 0)
+    : 0;
+  const hasRunningTimer = card.timeLogs
+    ? card.timeLogs.some(log => log.endTime === null)
+    : false;
+
+  const formatDurationBadge = (seconds: number) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    if (hrs > 0) return `${hrs}h ${mins}m`;
+    return `${mins}m`;
+  };
 
   const priorityLabels: Record<string, string> = {
     Low: "Baixa",
@@ -126,6 +140,16 @@ export function Card({ card, onClick, columnColor }: CardProps) {
             <div className="flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-500" title="Possui subtarefas">
               <Layers size={12} />
               <span>{card.subtasks.length}</span>
+            </div>
+          )}
+
+          {(totalLoggedTime > 0 || hasRunningTimer) && (
+            <div className={cn(
+              "flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded",
+              hasRunningTimer ? "bg-emerald-500/15 text-emerald-600 animate-pulse font-extrabold" : "bg-accent text-muted-foreground"
+            )} title={hasRunningTimer ? "Cronômetro rodando" : "Tempo registrado"}>
+              <Clock size={12} className={cn(hasRunningTimer && "animate-spin-slow")} />
+              <span>{formatDurationBadge(totalLoggedTime)}</span>
             </div>
           )}
         </div>

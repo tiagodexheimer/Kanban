@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Card, Column, CustomField } from "@/hooks/use-omnitask";
-import { Calendar, Tag as TagIcon, MoreHorizontal, CheckCircle2, Hash, Type, DollarSign, List } from "lucide-react";
+import { Calendar, Tag as TagIcon, MoreHorizontal, CheckCircle2, Hash, Type, DollarSign, List, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ListViewProps {
@@ -58,6 +58,7 @@ export function ListView({ columns, onEditCard, customFields = [] }: ListViewPro
 
             <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-widest">Prioridade</th>
             <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-widest">Data</th>
+            <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-widest">Tempo</th>
             <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-widest">Etiquetas</th>
             <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-widest w-10"></th>
           </tr>
@@ -114,6 +115,39 @@ export function ListView({ columns, onEditCard, customFields = [] }: ListViewPro
                     <span className="opacity-40 italic">Sem data</span>
                   )}
                 </div>
+              </td>
+              <td className="px-6 py-4">
+                {(() => {
+                  const totalLoggedTime = card.timeLogs
+                    ? card.timeLogs.filter(log => log.endTime !== null).reduce((sum, log) => sum + (log.duration || 0), 0)
+                    : 0;
+                  const hasRunningTimer = card.timeLogs
+                    ? card.timeLogs.some(log => log.endTime === null)
+                    : false;
+
+                  const formatDurationBadge = (seconds: number) => {
+                    const hrs = Math.floor(seconds / 3600);
+                    const mins = Math.floor((seconds % 3600) / 60);
+                    if (hrs > 0) return `${hrs}h ${mins}m`;
+                    return `${mins}m`;
+                  };
+
+                  if (totalLoggedTime === 0 && !hasRunningTimer) {
+                    return <span className="text-[10px] text-muted-foreground opacity-40">--</span>;
+                  }
+
+                  return (
+                    <span className={cn(
+                      "px-2 py-0.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1 border",
+                      hasRunningTimer 
+                        ? "bg-emerald-500/15 text-emerald-600 border-emerald-500/20 animate-pulse font-extrabold" 
+                        : "bg-accent text-muted-foreground border-border/50"
+                    )}>
+                      <Clock size={12} className={cn(hasRunningTimer && "animate-spin-slow")} />
+                      {formatDurationBadge(totalLoggedTime)}
+                    </span>
+                  );
+                })()}
               </td>
               <td className="px-6 py-4">
                 <div className="flex flex-wrap gap-1.5">

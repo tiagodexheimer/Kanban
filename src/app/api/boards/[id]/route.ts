@@ -42,6 +42,13 @@ export async function GET(
                 subtasks: { select: { id: true } },
                 parent: { select: { title: true } },
                 checklists: { select: { id: true, completed: true } },
+                timeLogs: {
+                  select: {
+                    id: true,
+                    duration: true,
+                    endTime: true
+                  }
+                }
               },
             },
           },

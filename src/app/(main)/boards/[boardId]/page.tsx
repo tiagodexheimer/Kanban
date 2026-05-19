@@ -16,6 +16,7 @@ import { ListView } from "@/components/board/list-view";
 import { CalendarView } from "@/components/board/calendar-view";
 import { CardModal } from "@/components/board/card-modal";
 import { DashboardView } from "@/components/board/dashboard-view";
+import { WorkloadView } from "@/components/board/workload-view";
 import { ActivityLog } from "@/components/board/activity-log";
 import { BoardSettingsModal } from "@/components/board/board-settings-modal";
 import { History, Settings, X } from "lucide-react";
@@ -180,6 +181,10 @@ export default function BoardPage() {
 
         {currentTab === "dashboard" && (
           <DashboardView boardId={boardId} />
+        )}
+
+        {currentTab === "workload" && (
+          <WorkloadView boardId={boardId} />
         )}
       </div>
 

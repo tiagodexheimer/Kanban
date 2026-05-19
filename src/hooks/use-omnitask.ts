@@ -53,6 +53,7 @@ export interface Card {
   blocking?: { id: string; title?: string }[];
   relatedTo?: { id: string; title?: string }[];
   relatesTo?: { id: string; title?: string }[];
+  timeLogs?: { id: string; duration: number | null; endTime: string | Date | null }[];
   createdAt: string;
 }
 

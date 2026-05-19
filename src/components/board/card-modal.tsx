@@ -13,6 +13,7 @@ import { CustomFieldsEditor } from "./custom-fields-editor";
 import { Calendar, Users, History, Link as LinkIcon, Layers, Clock } from "lucide-react";
 import { SubtaskEditor } from "./subtask-editor";
 import { DependencyEditor } from "./dependency-editor";
+import { TimeTracker } from "./time-tracker";
 import { cn } from "@/lib/utils";
 
 interface CardModalProps {
@@ -346,6 +347,10 @@ function CardForm({ card, columnId, backlogId, onClose, boardTags, boardId, proj
                   </div>
                 )}
               </div>
+
+              {card && (
+                <TimeTracker cardId={card.id} />
+              )}
 
               <div>
                 <label className="block text-[10px] font-bold text-muted-foreground uppercase mb-1.5 ml-1 flex items-center gap-2">

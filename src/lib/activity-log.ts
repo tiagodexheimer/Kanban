@@ -7,7 +7,11 @@ export type ActivityType =
   | "DELETE_CARD" 
   | "ADD_COMMENT" 
   | "CREATE_COLUMN"
-  | "INVITE_MEMBER";
+  | "INVITE_MEMBER"
+  | "START_TIMER"
+  | "STOP_TIMER"
+  | "LOG_TIME"
+  | "DELETE_TIME_LOG";
 
 interface LogActivityProps {
   type: ActivityType;

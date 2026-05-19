@@ -104,15 +104,15 @@ Inspirado na inteligência do ClickUp.
 - [x] **Whiteboards (Quadros Brancos)**: Uma área para desenho livre e diagramas (usando algo como Excalidraw ou Canvas API).
 - [x] **Menções Globais**: Uso de `@` para referenciar membros ou tarefas em comentários.
 
-### **Sprint 10: IA & Automações Avançadas (Semana 10)**
-- [ ] **IA de Resumo**: Uso de IA para resumir comentários e gerar descrições. Integrar uma API de LLM (como Gemini ou OpenAI) para resumir longas threads de comentários ou gerar descrições de tarefas automaticamente.
-- [ ] **Gatilhos de Tempo**: Automações baseadas em prazos e atrasos. Automações que disparam por data (ex: "Se a tarefa estiver atrasada, envie um alerta para o responsável").
-- [ ] **Webhooks & Integrações**: Enviar notificações para Slack/Discord ou criar tarefas via e-mail.
-
-### **Sprint 11: Gestão de Tempo & Recursos (Semana 11)**
+### **Sprint 10: Gestão de Tempo & Recursos (Semana 10)**
 - [ ] **Time Tracking**: Cronômetro integrado para registro de tempo por tarefa. Botão de "Play/Pause" dentro do card para registrar o tempo gasto na tarefa.
 - [ ] **Carga de Trabalho**: Visualização da distribuição de tarefas entre membros. Um gráfico que mostra quantas tarefas cada membro da equipe tem atribuídas para evitar sobrecarga.
 - [ ] **Exportação de Relatórios**: Gerar PDFs ou CSVs com o tempo gasto e tarefas concluídas no período.
+
+### **Sprint 11: IA & Automações Avançadas (Semana 11)**
+- [ ] **IA de Resumo**: Uso de IA para resumir comentários e gerar descrições. Integrar uma API de LLM (como Gemini ou OpenAI) para resumir longas threads de comentários ou gerar descrições de tarefas automaticamente.
+- [ ] **Gatilhos de Tempo**: Automações baseadas em prazos e atrasos. Automações que disparam por data (ex: "Se a tarefa estiver atrasada, envie um alerta para o responsável").
+- [ ] **Webhooks & Integrações**: Enviar notificações para Slack/Discord ou criar tarefas via e-mail.
 
 ---
 

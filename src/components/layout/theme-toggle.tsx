@@ -8,6 +8,17 @@ import { cn } from "@/lib/utils";
 export function ThemeToggle() {
   const { mode, colorTheme, toggleMode, setColorTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="flex p-1 bg-secondary/50 rounded-xl border border-border/50 backdrop-blur-sm min-h-[38px] min-w-[77px] opacity-0" />
+    );
+  }
 
   const colors = [
     { name: "purple", value: "#7c3aed", label: "Roxo" },

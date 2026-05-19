@@ -26,6 +26,7 @@ model User {
   memberProjects ProjectMember[]
   docs           Doc[]
   whiteboards    Whiteboard[]
+  timeLogs       TimeLog[]
 }
 
 model Account {
@@ -210,6 +211,7 @@ model Card {
   relatedTo                Card[]             @relation("CardRelationships")
   relatesTo                Card[]             @relation("CardRelationships")
   tags                     Tag[]              @relation("CardTags")
+  timeLogs                 TimeLog[]
 
   @@index([columnId])
   @@index([backlogId])
@@ -320,4 +322,22 @@ model Backlog {
   updatedAt   DateTime  @updatedAt
   project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
   tasks       Card[]
+}
+
+model TimeLog {
+  id        String    @id @default(uuid())
+  cardId    String
+  userId    String
+  startTime DateTime  @default(now())
+  endTime   DateTime?
+  duration  Int?      // duration in seconds
+  notes     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  card      Card      @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([cardId])
+  @@index([userId])
 }
