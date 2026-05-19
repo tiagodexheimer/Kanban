@@ -54,6 +54,7 @@ export interface Card {
   relatedTo?: { id: string; title?: string }[];
   relatesTo?: { id: string; title?: string }[];
   timeLogs?: { id: string; duration: number | null; endTime: string | Date | null }[];
+  weight?: number;
   createdAt: string;
 }
 
@@ -484,6 +485,7 @@ export function useCreateCard() {
       position: number;
       description?: string;
       priority?: string;
+      weight?: number;
       dueDate?: string | null;
       tagIds?: string[];
       assigneeIds?: string[];
@@ -515,6 +517,7 @@ export function useCreateCard() {
         description: newData.description || undefined,
         position: newData.position || 0,
         priority: (newData.priority as any) || "Medium",
+        weight: newData.weight || 1,
         columnId: newData.columnId,
         dueDate: newData.dueDate ? new Date(newData.dueDate) : null,
         tags: [],

@@ -84,6 +84,7 @@ function CardForm({ card, columnId, backlogId, onClose, boardTags, boardId, proj
   const [title, setTitle] = useState(card?.title || "");
   const [description, setDescription] = useState(card?.description || "");
   const [priority, setPriority] = useState(card?.priority || "Medium");
+  const [weight, setWeight] = useState(card?.weight || 1);
   const [dueDate, setDueDate] = useState<string>(
     card?.dueDate ? new Date(card.dueDate).toISOString().split('T')[0] : ""
   );
@@ -144,6 +145,7 @@ function CardForm({ card, columnId, backlogId, onClose, boardTags, boardId, proj
       title,
       description,
       priority,
+      weight: Number(weight),
       dueDate: dueDate || null,
       tagIds: selectedTagIds,
       assigneeIds: selectedAssigneeIds
@@ -164,6 +166,7 @@ function CardForm({ card, columnId, backlogId, onClose, boardTags, boardId, proj
         backlogId, 
         description,
         priority,
+        weight: Number(weight),
         dueDate: dueDate || null,
         tagIds: selectedTagIds,
         assigneeIds: selectedAssigneeIds,
@@ -181,6 +184,7 @@ function CardForm({ card, columnId, backlogId, onClose, boardTags, boardId, proj
         position: 0,
         description,
         priority,
+        weight: Number(weight),
         dueDate: dueDate || null,
         tagIds: selectedTagIds,
         assigneeIds: selectedAssigneeIds,
@@ -314,6 +318,21 @@ function CardForm({ card, columnId, backlogId, onClose, boardTags, boardId, proj
                     <option value="Medium">Média</option>
                     <option value="High">Alta</option>
                     <option value="Urgent">Urgente</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-muted-foreground uppercase mb-1.5 ml-1">Esforço / Peso</label>
+                  <select 
+                    value={weight}
+                    onChange={(e) => setWeight(Number(e.target.value))}
+                    className="w-full bg-card border border-border/50 rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-primary font-bold"
+                  >
+                    <option value="1">1 pt (Muito Simples)</option>
+                    <option value="2">2 pts (Fácil)</option>
+                    <option value="3">3 pts (Médio)</option>
+                    <option value="5">5 pts (Complexo)</option>
+                    <option value="8">8 pts (Muito Complexo)</option>
+                    <option value="13">13 pts (Épico)</option>
                   </select>
                 </div>
                 <div>

@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Card, Column, CustomField } from "@/hooks/use-omnitask";
-import { Calendar, Tag as TagIcon, MoreHorizontal, CheckCircle2, Hash, Type, DollarSign, List, Clock } from "lucide-react";
+import { Calendar, Tag as TagIcon, MoreHorizontal, CheckCircle2, Hash, Type, DollarSign, List, Clock, Dumbbell } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ListViewProps {
@@ -59,6 +59,7 @@ export function ListView({ columns, onEditCard, customFields = [] }: ListViewPro
             <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-widest">Prioridade</th>
             <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-widest">Data</th>
             <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-widest">Tempo</th>
+            <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-widest">Peso</th>
             <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-widest">Etiquetas</th>
             <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-widest w-10"></th>
           </tr>
@@ -148,6 +149,16 @@ export function ListView({ columns, onEditCard, customFields = [] }: ListViewPro
                     </span>
                   );
                 })()}
+              </td>
+              <td className="px-6 py-4">
+                {card.weight !== undefined && card.weight > 0 ? (
+                  <span className="flex items-center gap-1 text-xs text-amber-600 font-bold bg-amber-500/10 px-2 py-0.5 rounded-full w-fit">
+                    <Dumbbell className="w-3.5 h-3.5" />
+                    {card.weight} pt{card.weight > 1 ? "s" : ""}
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-muted-foreground opacity-40">--</span>
+                )}
               </td>
               <td className="px-6 py-4">
                 <div className="flex flex-wrap gap-1.5">

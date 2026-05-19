@@ -6,7 +6,7 @@ import {
 import { useBoardReports } from "@/hooks/use-time-tracking";
 import { 
   Users, CheckCircle2, Clock, AlertTriangle, 
-  FileSpreadsheet, Printer, Activity, TrendingUp, Sparkles
+  FileSpreadsheet, Printer, Activity, TrendingUp, Sparkles, Dumbbell
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -17,6 +17,7 @@ interface WorkloadViewProps {
 
 export function WorkloadView({ boardId }: WorkloadViewProps) {
   const { data: reportsData, isLoading } = useBoardReports(boardId);
+  const [viewMode, setViewMode] = React.useState<"count" | "weight">("count");
 
   if (isLoading) {
     return (
@@ -48,8 +49,8 @@ export function WorkloadView({ boardId }: WorkloadViewProps) {
   // 1. Data for tasks distribution bar chart (completed vs pending per user)
   const taskDistributionData = members.map(m => ({
     name: m.name,
-    "Concluídas": m.completedTasksCount,
-    "Pendentes": m.pendingTasksCount,
+    "Concluídas": viewMode === "count" ? m.completedTasksCount : m.completedWeight,
+    "Pendentes": viewMode === "count" ? m.pendingTasksCount : m.pendingWeight,
   }));
 
   // 2. Data for time spent pie chart (hours per user)
@@ -105,7 +106,31 @@ export function WorkloadView({ boardId }: WorkloadViewProps) {
           </h2>
           <p className="text-sm text-muted-foreground">Distribuição de tarefas, horas registradas e alertas de sobrecarga dos membros.</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex bg-secondary/80 p-0.5 rounded-xl border border-border/50 shrink-0">
+            <button
+              onClick={() => setViewMode("count")}
+              className={cn(
+                "px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer",
+                viewMode === "count" 
+                  ? "bg-background text-primary shadow-sm" 
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Quantidade
+            </button>
+            <button
+              onClick={() => setViewMode("weight")}
+              className={cn(
+                "px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer",
+                viewMode === "weight" 
+                  ? "bg-background text-primary shadow-sm" 
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Peso/Esforço
+            </button>
+          </div>
           <button
             onClick={handleExportCSV}
             className="flex items-center gap-2 px-4 py-2.5 bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-xl text-sm font-bold transition-all border border-border cursor-pointer shadow-sm"
@@ -162,9 +187,11 @@ export function WorkloadView({ boardId }: WorkloadViewProps) {
               <CheckCircle2 size={20} />
             </div>
             <div>
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest block">Métricas Gerais</span>
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest block">Progresso do Quadro</span>
               <span className="text-2xl font-black text-foreground tracking-tight">
-                {summary.completedTasks} / {summary.totalTasks} concluintes
+                {viewMode === "count" 
+                  ? `${summary.completedTasks} / ${summary.totalTasks} concluintes`
+                  : `${summary.completedWeight} / ${summary.totalWeight} pts (Peso)`}
               </span>
             </div>
           </div>
@@ -193,7 +220,7 @@ export function WorkloadView({ boardId }: WorkloadViewProps) {
           <div>
             <h4 className="text-sm font-bold text-rose-600 print:text-rose-700">Risco de Sobrecarga Detectado!</h4>
             <p className="text-xs text-rose-600/80 mt-0.5 print:text-rose-700/90 leading-relaxed">
-              Os seguintes membros possuem mais de 5 tarefas em andamento. Considere redistribuir as pendências para evitar burnout:{" "}
+              Os seguintes membros possuem mais de 5 tarefas pendentes ou carga acumulada maior que 15 pontos de esforço. Considere redistribuir as pendências para evitar burnout:{" "}
               <span className="font-bold">{overloadedMembers.map(m => m.name).join(", ")}</span>.
             </p>
           </div>
@@ -204,7 +231,9 @@ export function WorkloadView({ boardId }: WorkloadViewProps) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 print:block print:space-y-8">
         {/* Left Side: Tasks Distribution Bar Chart */}
         <div className="lg:col-span-7 bg-card border border-border p-6 rounded-2xl shadow-sm print:border-none print:shadow-none">
-          <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider text-muted-foreground">Distribuição de Carga de Trabalho</h3>
+          <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider text-muted-foreground">
+            {viewMode === "count" ? "Distribuição de Carga (Quantidade)" : "Distribuição de Carga (Pontos de Esforço)"}
+          </h3>
           <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={taskDistributionData} margin={{ top: 20, right: 10, left: -20, bottom: 5 }}>
@@ -214,6 +243,7 @@ export function WorkloadView({ boardId }: WorkloadViewProps) {
                 <Tooltip 
                   contentStyle={{ backgroundColor: "var(--background)", borderColor: "var(--border)", borderRadius: "12px" }}
                   labelStyle={{ fontWeight: "bold" }}
+                  formatter={(value: any) => [`${value} ${viewMode === "count" ? "tarefas" : "pontos"}`, ""]}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }} />
                 <Bar dataKey="Concluídas" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} barSize={24} />
@@ -276,9 +306,9 @@ export function WorkloadView({ boardId }: WorkloadViewProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 print:grid-cols-2">
           {members.map(member => {
             const hasOverload = member.workloadStatus === "RED";
-            const percent = member.totalTasks > 0 
-              ? Math.round((member.completedTasksCount / member.totalTasks) * 100)
-              : 0;
+            const percent = viewMode === "count"
+              ? (member.totalTasks > 0 ? Math.round((member.completedTasksCount / member.totalTasks) * 100) : 0)
+              : (member.totalWeight > 0 ? Math.round((member.completedWeight / member.totalWeight) * 100) : 0);
 
             return (
               <div 
@@ -334,16 +364,29 @@ export function WorkloadView({ boardId }: WorkloadViewProps) {
                 {/* Stats grids */}
                 <div className="grid grid-cols-3 gap-2.5 text-center border-t border-border/50 pt-3">
                   <div>
-                    <span className="text-[9px] font-bold text-muted-foreground uppercase block">Concluídas</span>
-                    <span className="text-sm font-black text-emerald-500">{member.completedTasksCount}</span>
+                    <span className="text-[9px] font-bold text-muted-foreground uppercase block">Concluído</span>
+                    <span className="text-sm font-black text-emerald-500">
+                      {viewMode === "count" ? member.completedTasksCount : member.completedWeight}
+                    </span>
+                    <span className="text-[9px] text-muted-foreground block leading-none mt-0.5">
+                      {viewMode === "count" ? `${member.completedWeight} pts` : `${member.completedTasksCount} cards`}
+                    </span>
                   </div>
                   <div>
-                    <span className="text-[9px] font-bold text-muted-foreground uppercase block">Pendentes</span>
-                    <span className="text-sm font-black text-blue-500">{member.pendingTasksCount}</span>
+                    <span className="text-[9px] font-bold text-muted-foreground uppercase block">Pendente</span>
+                    <span className="text-sm font-black text-blue-500">
+                      {viewMode === "count" ? member.pendingTasksCount : member.pendingWeight}
+                    </span>
+                    <span className="text-[9px] text-muted-foreground block leading-none mt-0.5">
+                      {viewMode === "count" ? `${member.pendingWeight} pts` : `${member.pendingTasksCount} cards`}
+                    </span>
                   </div>
                   <div>
                     <span className="text-[9px] font-bold text-muted-foreground uppercase block">Tempo Total</span>
-                    <span className="text-sm font-black text-primary">{formatDuration(member.totalTimeLogged)}</span>
+                    <span className="text-sm font-black text-primary leading-none block my-1">
+                      {formatDuration(member.totalTimeLogged)}
+                    </span>
+                    <span className="text-[9px] text-muted-foreground block leading-none">registrado</span>
                   </div>
                 </div>
               </div>

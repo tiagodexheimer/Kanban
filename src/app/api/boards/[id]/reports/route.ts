@@ -95,6 +95,7 @@ export async function GET(
           columnType: col.type,
           isCompleted: card.columnId ? doneColumnIds.includes(card.columnId) : false,
           assignees: card.assignees,
+          weight: card.weight !== undefined ? card.weight : 1,
           totalDuration, // in seconds
           hasActiveTimer,
           checklistProgress: totalChecklistItems > 0 
@@ -135,6 +136,10 @@ export async function GET(
       const pendingTasks = assignedTasks.filter(card => !card.isCompleted);
       const completedTasks = assignedTasks.filter(card => card.isCompleted);
 
+      const totalWeight = assignedTasks.reduce((sum, card) => sum + (card.weight || 0), 0);
+      const pendingWeight = pendingTasks.reduce((sum, card) => sum + (card.weight || 0), 0);
+      const completedWeight = completedTasks.reduce((sum, card) => sum + (card.weight || 0), 0);
+
       // Sum duration of time logs tracked by this user *on this board*
       let totalSecondsLogged = 0;
       board.columns.forEach(col => {
@@ -147,11 +152,11 @@ export async function GET(
         });
       });
 
-      // Workload Status: Verde (<3 active tasks), Amarelo (3-5), Vermelho (>5)
+      // Workload Status: Verde (<3 active tasks ou < 8 SP), Amarelo (3-5 tarefas ou 8-15 SP), Vermelho (>5 tarefas ou > 15 SP)
       let workloadStatus: "GREEN" | "AMBER" | "RED" = "GREEN";
-      if (pendingTasks.length > 5) {
+      if (pendingTasks.length > 5 || pendingWeight > 15) {
         workloadStatus = "RED";
-      } else if (pendingTasks.length >= 3) {
+      } else if (pendingTasks.length >= 3 || pendingWeight >= 8) {
         workloadStatus = "AMBER";
       }
 
@@ -162,6 +167,9 @@ export async function GET(
         totalTasks: assignedTasks.length,
         pendingTasksCount: pendingTasks.length,
         completedTasksCount: completedTasks.length,
+        totalWeight,
+        pendingWeight,
+        completedWeight,
         workloadStatus,
         totalTimeLogged: totalSecondsLogged
       };
@@ -170,6 +178,8 @@ export async function GET(
     // 3. Overall Summary
     const totalTimeLoggedAll = allCards.reduce((sum, c) => sum + c.totalDuration, 0);
     const completedTasksCount = allCards.filter(c => c.isCompleted).length;
+    const totalWeightAll = allCards.reduce((sum, c) => sum + (c.weight || 0), 0);
+    const completedWeightAll = allCards.filter(c => c.isCompleted).reduce((sum, c) => sum + (c.weight || 0), 0);
 
     return NextResponse.json({
       cards: allCards,
@@ -178,6 +188,9 @@ export async function GET(
         totalTasks: allCards.length,
         completedTasks: completedTasksCount,
         pendingTasks: allCards.length - completedTasksCount,
+        totalWeight: totalWeightAll,
+        completedWeight: completedWeightAll,
+        pendingWeight: totalWeightAll - completedWeightAll,
         totalTimeLogged: totalTimeLoggedAll, // in seconds
         averageTimePerTask: completedTasksCount > 0 
           ? Math.round(totalTimeLoggedAll / completedTasksCount) 

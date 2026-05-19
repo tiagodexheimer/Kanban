@@ -57,12 +57,13 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { tagIds, assigneeIds, blockedByIds, blockingIds, relatedToIds, dueDate, ...rest } = body;
+    const { tagIds, assigneeIds, blockedByIds, blockingIds, relatedToIds, dueDate, weight, ...rest } = body;
 
     const card = await prisma.card.update({
       where: { id },
       data: {
         ...rest,
+        weight: weight !== undefined ? (weight ? Number(weight) : 1) : undefined,
         dueDate: dueDate !== undefined ? (dueDate ? new Date(dueDate) : null) : undefined,
         tags: tagIds !== undefined ? {
           set: tagIds.map((tid: string) => ({ id: tid }))

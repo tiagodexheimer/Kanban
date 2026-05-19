@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     const session = await getServerSession(authOptions);
     const userId = (session?.user as any)?.id;
     const body = await request.json();
-    const { title, columnId, position, description, priority, dueDate, tagIds, assigneeIds, parentId, blockedByIds, blockingIds, relatedToIds, checklists, customFieldValues } = body;
+    const { title, columnId, position, description, priority, weight, dueDate, tagIds, assigneeIds, parentId, blockedByIds, blockingIds, relatedToIds, checklists, customFieldValues } = body;
 
     const column = columnId ? await prisma.column.findUnique({
       where: { id: columnId },
@@ -23,6 +23,7 @@ export async function POST(request: Request) {
         position: position || 0,
         description,
         priority: priority || "Medium",
+        weight: weight !== undefined ? Number(weight) : 1,
         dueDate: dueDate ? new Date(dueDate) : null,
         parentId,
         tags: tagIds ? {

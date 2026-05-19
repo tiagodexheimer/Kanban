@@ -41,6 +41,7 @@ export interface BoardReportData {
     totalDuration: number;
     hasActiveTimer: boolean;
     checklistProgress: string | null;
+    weight: number;
   }[];
   members: {
     id: string;
@@ -49,6 +50,9 @@ export interface BoardReportData {
     totalTasks: number;
     pendingTasksCount: number;
     completedTasksCount: number;
+    totalWeight: number;
+    pendingWeight: number;
+    completedWeight: number;
     workloadStatus: "GREEN" | "AMBER" | "RED";
     totalTimeLogged: number;
   }[];
@@ -56,6 +60,9 @@ export interface BoardReportData {
     totalTasks: number;
     completedTasks: number;
     pendingTasks: number;
+    totalWeight: number;
+    completedWeight: number;
+    pendingWeight: number;
     totalTimeLogged: number;
     averageTimePerTask: number;
   };

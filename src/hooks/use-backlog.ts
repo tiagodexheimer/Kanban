@@ -72,6 +72,7 @@ export function useCreateBacklogTask(projectId: string) {
       title: string; 
       description?: string; 
       priority?: string; 
+      weight?: number;
       dueDate?: string | null;
       tagIds?: string[];
       assigneeIds?: string[];
@@ -99,6 +100,7 @@ export function useCreateBacklogTask(projectId: string) {
         description: newData.description || undefined,
         position: 0,
         priority: (newData.priority as any) || "Medium",
+        weight: newData.weight || 1,
         columnId: "", 
         backlogId: newData.backlogId,
         dueDate: newData.dueDate ? new Date(newData.dueDate) : null,

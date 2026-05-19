@@ -191,6 +191,7 @@ model Card {
   description              String?
   position                 Int
   priority                 String             @default("Medium")
+  weight                   Int                @default(1)
   dueDate                  DateTime?
   columnId                 String?
   backlogId                String?

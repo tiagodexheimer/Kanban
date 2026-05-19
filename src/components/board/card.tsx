@@ -4,7 +4,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Card as CardType } from "@/hooks/use-omnitask";
 import { cn } from "@/lib/utils";
-import { GripVertical, Calendar, CheckCircle2, ShieldAlert, Layers, Link as LinkIcon, Clock } from "lucide-react";
+import { GripVertical, Calendar, CheckCircle2, ShieldAlert, Layers, Link as LinkIcon, Clock, Dumbbell } from "lucide-react";
 
 interface CardProps {
   card: CardType;
@@ -120,6 +120,13 @@ export function Card({ card, onClick, columnColor }: CardProps) {
             </div>
           )}
           
+          {card.weight !== undefined && card.weight > 0 && (
+            <div className="flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500" title={`Esforço: ${card.weight}`}>
+              <Dumbbell size={10} />
+              <span>{card.weight} pt{card.weight > 1 ? "s" : ""}</span>
+            </div>
+          )}
+
           {formattedDate && (
             <div className={cn(
               "flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded",
